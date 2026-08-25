@@ -120,11 +120,11 @@ private:
 
 class ASTFunctionDeclaration : public ASTNode {
 public:
-    ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTExprPtr> body)
+    ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTPtr> body)
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name)
         , m_body(std::from_range, body) {}
-    ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTIdentifier> parameters, std::span<ASTExprPtr> body)
+    ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTIdentifier> parameters, std::span<ASTPtr> body)
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name)
         , m_parameters(std::from_range, parameters)
@@ -132,11 +132,11 @@ public:
     ~ASTFunctionDeclaration() = default;
 
     const ASTIdentifier& func_name() const noexcept { return m_func_name; }
-    const std::vector<ASTExprPtr>& body() const noexcept { return m_body; }
+    const std::vector<ASTPtr>& body() const noexcept { return m_body; }
 private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;
-    std::vector<ASTExprPtr> m_body;
+    std::vector<ASTPtr> m_body;
 };
 
 void dump_node(ASTPtr node, uint8_t depth, bool has_child);

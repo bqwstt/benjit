@@ -105,14 +105,18 @@ std::shared_ptr<ASTFunctionDeclaration>
 Parser::parse_function()
 {
     consume_token(); // Consume 'algorithm' keyword
-    ASTIdentifier func_name(m_next_token.literal());
+    ASTIdentifier func_name(m_current_token.literal());
+
+    // @FIXME: Actually check for parameters and syntax errors
     consume_token(); // Consume func name
+    consume_token(); // Consume open paren
+    consume_token(); // Consume close paren
     consume_token(); // Consume 'is' keyword
 
-    std::vector<ASTExprPtr> body;
+    std::vector<ASTPtr> body;
     while (m_next_token.kind() != TokenKind::End) {
-        auto expr = parse_expression();
-        body.push_back(std::move(expr));
+        auto stmt = parse_statement();
+        body.push_back(std::move(stmt));
     }
 
     // @TODO: Anything other than variables!

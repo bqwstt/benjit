@@ -35,31 +35,36 @@ Lexer::Lexer(const std::filesystem::path& source_file)
 Token
 Lexer::consume_token()
 {
-    if (!is_at_end()) {
-        char character = read_char();
+    if (is_at_end())
+        return Token(TokenKind::Eof, TokenPos{m_line, m_column});
+
+    char character = read_char();
+    while (!is_at_end()) {
+        // Read whitespace
         switch (character) {
             case ' ':
             case '\r':
             case '\t':
                 character = read_char();
-                break;
+                continue;
             case '\n':
                 set_new_line();
                 character = read_char();
+                continue;
+            default:
                 break;
         }
-
-        if (character == '#') {
-            // Found comment, skip the whole line.
-            while (peek() != '\n' && !is_at_end())
-                character = read_char();
-        }
-
-        m_start = m_current;
-        return translate(character);
+        break;
     }
 
-    return Token(TokenKind::Eof, TokenPos{m_line, m_column});
+    if (character == '#') {
+        // Found comment, skip the whole line.
+        while (peek() != '\n' && !is_at_end())
+            character = read_char();
+    }
+
+    m_start = m_current;
+    return translate(character);
 }
 
 Token
