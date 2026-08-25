@@ -1,1 +1,3 @@
 jit
+jit.dSYM/
+examples/sandbox.benl

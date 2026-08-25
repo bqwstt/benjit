@@ -3,6 +3,7 @@
 #include <print>
 
 #include "src/lexer.hh"
+#include "src/parser.hh"
 
 int
 main(int argc, char** argv)
@@ -15,12 +16,10 @@ main(int argc, char** argv)
     const auto path = std::filesystem::path(argv[1]);
 
     Lexer lexer(path);
-    const std::vector<Token> tokens = lexer.scan_tokens();
-
-    for (const auto& tok : tokens) {
-        std::print("{}\n", tok.to_string());
-    }
-
-    if (lexer.had_error())
+    if (lexer.had_error()) {
         return 65;
+	}
+
+	Parser parser(std::move(lexer));
+	parser.parse();
 }

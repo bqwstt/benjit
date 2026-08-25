@@ -16,6 +16,7 @@ Token::to_string() const
         CASE(TokenKind::Minus, "Minus");
         CASE(TokenKind::Multiply, "Multiply");
         CASE(TokenKind::Divide, "Divide");
+        CASE(TokenKind::Exponent, "Exponent");
         CASE(TokenKind::Hash, "Hash");
         CASE(TokenKind::Comma, "Comma");
         CASE(TokenKind::OpenParenthesis, "OpenParen");
@@ -49,4 +50,48 @@ Token::to_string() const
     #undef CASE
 
     return std::format("<{} ({})>", name, std::string(m_literal));
+}
+
+bool
+Token::is_operator() const noexcept
+{
+    return m_kind == TokenKind::Plus
+        || m_kind == TokenKind::Minus
+        || m_kind == TokenKind::Multiply
+        || m_kind == TokenKind::Divide
+        || m_kind == TokenKind::Exponent;
+}
+
+unsigned
+Token::operator_precedence() const noexcept
+{
+    // Based on Pratt's parser logic.
+    switch (m_kind) {
+        case TokenKind::Minus:
+        case TokenKind::Plus:
+            return 1;
+        case TokenKind::Multiply:
+        case TokenKind::Divide:
+            return 2;
+        case TokenKind::Exponent:
+            return 3;
+        default:
+            return 0;
+    }
+}
+
+OperatorAssociativity
+Token::operator_associativity() const noexcept
+{
+    switch (m_kind) {
+        case TokenKind::Minus:
+        case TokenKind::Plus:
+        case TokenKind::Multiply:
+        case TokenKind::Divide:
+            return OperatorAssociativity::Left;
+        case TokenKind::Exponent:
+            return OperatorAssociativity::Right;
+        default:
+            return OperatorAssociativity::Unknown;
+    }
 }

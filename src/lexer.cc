@@ -1,4 +1,5 @@
 #include <fstream>
+#include <print>
 #include <sstream>
 #include <cctype>
 #include <format>
@@ -31,36 +32,34 @@ Lexer::Lexer(const std::filesystem::path& source_file)
     m_source_code = read_file(source_file);
 }
 
-std::vector<Token>
-Lexer::scan_tokens()
+Token
+Lexer::consume_token()
 {
-    std::vector<Token> tokens;
-    while (!is_at_end()) {
-        const char character = read_char();
+    if (!is_at_end()) {
+        char character = read_char();
         switch (character) {
             case ' ':
             case '\r':
             case '\t':
-                continue;
+                character = read_char();
+                break;
             case '\n':
                 set_new_line();
-                continue;
+                character = read_char();
+                break;
         }
 
-        if (character == '/' && peek() == '/') {
+        if (character == '#') {
             // Found comment, skip the whole line.
             while (peek() != '\n' && !is_at_end())
-                m_current += 1;
-
-            continue;
+                character = read_char();
         }
 
-        tokens.push_back(translate(character));
         m_start = m_current;
+        return translate(character);
     }
 
-    tokens.push_back(Token(TokenKind::Eof, TokenPos{m_line, m_column}));
-    return tokens;
+    return Token(TokenKind::Eof, TokenPos{m_line, m_column});
 }
 
 Token
@@ -91,6 +90,7 @@ Lexer::translate(const char character) noexcept
         case '-': return Token("-", TokenKind::Minus, pos);
         case '*': return Token("*", TokenKind::Multiply, pos);
         case '/': return Token("/", TokenKind::Divide, pos);
+        case '^': return Token("^", TokenKind::Exponent, pos);
         case '#': return Token("#", TokenKind::Hash, pos);
         case '|':
             if (match('|'))
@@ -138,11 +138,12 @@ Lexer::translate(const char character) noexcept
                 return translate_sequence(character);
             else if (std::isdigit(character))
                 return translate_digit_literal(character);
-            else
+            else {
                 Reporter::report_error_at("Unknown token.",
                                        m_source_code,
                                        m_line,
                                        m_column);
+            }
     }
 
     return Token(TokenKind::Illegal, pos);
@@ -193,7 +194,6 @@ Lexer::translate_digit_literal(const char begin) noexcept
         const char next_char = peek();
 
         if (next_char == '.') {
-            const char char_after_dot = peek_ahead(1);
             if (already_found_dot) {
                 // The literal had more than one dot, which is an error.
                 while (!is_stop(peek())) {

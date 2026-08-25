@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <stdint.h>
 #include <string>
-#include <vector>
 
 #include "token.hh"
 
@@ -29,7 +28,7 @@ public:
     explicit Lexer(const std::string& source_code) : m_source_code(source_code) {}
     ~Lexer() = default;
 
-    [[nodiscard]] std::vector<Token> scan_tokens();
+    [[nodiscard]] Token consume_token();
 
     [[nodiscard]] bool had_error() const noexcept { return m_had_error; }
 private:
@@ -52,16 +51,16 @@ private:
     [[nodiscard]] bool match(const char expected) noexcept;
 
     /// Returns the character under the cursor.
-    [[nodiscard]] char peek() const noexcept;
+    char peek() const noexcept;
 
     /// Returns the character under the cursor plus `amount`.
-    [[nodiscard]] char peek_ahead(uint32_t amount) const noexcept;
+    char peek_ahead(uint32_t amount) const noexcept;
 
     /// Returns the character under the cursor minus `amount`.
-    [[nodiscard]] char peek_behind(uint32_t amount) const noexcept;
+    char peek_behind(uint32_t amount) const noexcept;
 
     /// Advances the cursor by `amount` and returns the character under it.
-    [[nodiscard]] char skip_chars(uint32_t amount) noexcept;
+    char skip_chars(uint32_t amount) noexcept;
 
     [[nodiscard]] Token translate(const char character) noexcept;
     [[nodiscard]] Token translate_string_literal() noexcept;
@@ -69,16 +68,16 @@ private:
     [[nodiscard]] Token translate_sequence(const char begin) noexcept;
 
     /// Checks whether the cursor has passed the end of the source code.
-    [[nodiscard]] bool is_at_end() const noexcept;
+    bool is_at_end() const noexcept;
 
     /// Checks whether `character` is whitespace.
-    [[nodiscard]] bool is_whitespace(const char character) const noexcept;
+    bool is_whitespace(const char character) const noexcept;
 
     /// Checks whether `character` is a stop character.
     /// A stop character is either:
     /// - a whitespace character
     /// - at the end of the source code
-    [[nodiscard]] bool is_stop(const char character) const noexcept;
+    bool is_stop(const char character) const noexcept;
 
     /// Advances the cursor by 1 if `cond` is true.
     void advance_if(bool cond) noexcept;
