@@ -13,6 +13,7 @@ ASTNode::to_string() const
         case ASTKind::FunctionDeclaration: return "FunctionDeclaration";
         case ASTKind::VariableAssignment: return "VariableAssignment";
         case ASTKind::Keyword: return "Keyword";
+        case ASTKind::Print: return "Print";
     }
 }
 

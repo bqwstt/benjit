@@ -20,6 +20,7 @@ std::unordered_map<std::string, TokenKind> k_keywords {
     {"is", TokenKind::Is},
     {"then", TokenKind::Then},
     {"end", TokenKind::End},
+    {"print", TokenKind::Print},
 };
 
 class Lexer {

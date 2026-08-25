@@ -7,6 +7,7 @@
 void
 Parser::consume_token()
 {
+    // @FIXME: If the file ends with a newline, this always returns Illegal and loops infinitely
     m_current_token = m_next_token;
     if (m_current_token.kind() == TokenKind::Illegal || m_current_token.kind() == TokenKind::Eof)
         return;
@@ -14,22 +15,18 @@ Parser::consume_token()
     m_next_token = m_lexer.consume_token();
 }
 
-void
+ASTProgram
 Parser::parse()
 {
     ASTProgram program;
     while (m_current_token.kind() != TokenKind::Eof) {
         ASTPtr stmt = parse_statement();
-
         if (stmt != nullptr) {
             program.add_statement(stmt);
         }
-
-        consume_token();
     }
-    
-    dump_ast(program);
-    return;
+
+    return program;
 }
 
 std::shared_ptr<ASTNode>
@@ -44,11 +41,14 @@ Parser::parse_statement()
         case TokenKind::Variable: {
             consume_token(); // Consume 'variable' keyword
             stmt = parse_assignment();
-            auto decl = dynamic_pointer_cast<ASTVariableAssignment>(stmt);
             break;
         }
         case TokenKind::Algorithm: {
             stmt = parse_function();
+            break;
+        }
+        case TokenKind::Print: {
+            stmt = parse_print();
             break;
         }
         default: break;
@@ -62,12 +62,13 @@ Parser::parse_expression(uint8_t precedence_limit)
 {
     std::shared_ptr<ASTExpression> expr;
     expr = std::make_shared<ASTNumericExpr>(m_current_token.literal());
+    consume_token(); // Consume the number
 
-    while (m_next_token.is_operator()) {
-        uint8_t prec = m_next_token.operator_precedence();
+    while (m_current_token.is_operator()) {
+        uint8_t prec = m_current_token.operator_precedence();
         uint8_t final_prec = prec;
 
-        if (m_next_token.operator_associativity() == OperatorAssociativity::Right) {
+        if (m_current_token.operator_associativity() == OperatorAssociativity::Right) {
             final_prec -= 1;
         }
 
@@ -75,16 +76,14 @@ Parser::parse_expression(uint8_t precedence_limit)
             return expr;
         }
 
-        Token op_token = m_next_token;
+        Token op_token = m_current_token;
 
-        // Consume both the number and the operator.
-        consume_token();
-        consume_token();
+        consume_token(); // Consume the operator
 
         auto right = parse_expression(final_prec);
         auto binop = std::make_shared<ASTBinaryOp>(op_token, expr, right);
         expr = std::move(binop);
-    };
+    }
 
     return expr;
 }
@@ -97,8 +96,7 @@ Parser::parse_assignment()
     consume_token(); // Consume assignment operator
 
     auto expr = parse_expression();
-    auto decl = std::make_shared<ASTVariableAssignment>(identifier, std::move(expr));
-    return decl;
+    return std::make_shared<ASTVariableAssignment>(identifier, std::move(expr));
 }
 
 std::shared_ptr<ASTFunctionDeclaration>
@@ -114,21 +112,38 @@ Parser::parse_function()
     consume_token(); // Consume 'is' keyword
 
     std::vector<ASTPtr> body;
-    while (m_next_token.kind() != TokenKind::End) {
+    while (m_current_token.kind() != TokenKind::End) {
         auto stmt = parse_statement();
         body.push_back(std::move(stmt));
     }
 
+    consume_token(); // Consume 'end' keyword
+
     // @TODO: Anything other than variables!
     return std::make_shared<ASTFunctionDeclaration>(func_name, body);
+}
+
+std::shared_ptr<ASTPrint>
+Parser::parse_print()
+{
+    consume_token(); // Consume 'print' keyword
+    consume_token(); // Consume open paren
+
+    // @FIXME: This print only takes one parameter.
+    ASTIdentifier ident(m_current_token.literal());
+    consume_token(); // Consume param
+
+    consume_token(); // Consume close paren
+
+    return std::make_shared<ASTPrint>(ident);
 }
 
 void dump_ast(const ASTProgram& program)
 {
     std::print("│[Program]\n");
     for (const auto& node : program.nodes()) {
-        printf("└──│[Statement]");
+        std::print("└──│[Statement]");
         dump_node(node, 1, true);
-        printf("\n");
+        std::print("\n");
     }
 }

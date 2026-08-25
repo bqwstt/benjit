@@ -43,13 +43,14 @@ Token::to_string() const
         CASE(TokenKind::Is, "Is");
         CASE(TokenKind::Then, "Then");
         CASE(TokenKind::End, "End");
+        CASE(TokenKind::Print, "Print");
         CASE(TokenKind::Illegal, "Illegal");
         CASE(TokenKind::Eof, "Eof");
     }
 
     #undef CASE
 
-    return std::format("<{} ({})>", name, std::string(m_literal));
+    return std::format("<{} ({})>", name, literal());
 }
 
 bool

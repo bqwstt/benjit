@@ -3,6 +3,8 @@
 #include "token.hh"
 
 #include <format>
+#include <print>
+#include <unordered_set>
 #include <vector>
 #include <span>
 #include <memory>
@@ -15,6 +17,7 @@ enum class ASTKind {
     Keyword,
     VariableAssignment,
     FunctionDeclaration,
+    Print,
 };
 
 class ASTNode {
@@ -137,6 +140,21 @@ private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;
     std::vector<ASTPtr> m_body;
+};
+
+class ASTPrint : public ASTNode {
+public:
+    ASTPrint(const ASTIdentifier& ident)
+        : ASTNode(ASTKind::Print)
+        , m_param(ident) {}
+    ~ASTPrint() = default;
+
+    template <typename T>
+    static void print(T element) { std::print("{}\n", element); };
+
+    const ASTIdentifier& param() const noexcept { return m_param; }
+private:
+    ASTIdentifier m_param;
 };
 
 void dump_node(ASTPtr node, uint8_t depth, bool has_child);

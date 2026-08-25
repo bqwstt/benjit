@@ -8,10 +8,16 @@
 
 class Parser {
 public:
-    explicit Parser(Lexer&& lexer) : m_lexer(std::move(lexer)) {}
+    explicit Parser(Lexer&& lexer) : m_lexer(std::move(lexer))
+    {
+        // Advance cursors: set current_token and next_token
+        consume_token();
+        consume_token();
+    }
+
     ~Parser() = default;
 
-    void parse();
+    ASTProgram parse();
 private:
     Lexer m_lexer;
     Token m_current_token;
@@ -21,9 +27,9 @@ private:
 
     [[nodiscard]] std::shared_ptr<ASTNode> parse_statement();
     [[nodiscard]] std::shared_ptr<ASTExpression> parse_expression(uint8_t precedence_limit = 0);
-    // [[nodiscard]] std::shared_ptr<ASTNode> parse_identifier();
     [[nodiscard]] std::shared_ptr<ASTVariableAssignment> parse_assignment();
     [[nodiscard]] std::shared_ptr<ASTFunctionDeclaration> parse_function();
+    [[nodiscard]] std::shared_ptr<ASTPrint> parse_print();
 };
 
 void dump_ast(const ASTProgram& program);

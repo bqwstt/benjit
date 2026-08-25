@@ -50,6 +50,7 @@ enum class TokenKind : unsigned short {
     Is,
     Then,
     End,
+    Print,
 
     Illegal = 126,
     Eof = 127,

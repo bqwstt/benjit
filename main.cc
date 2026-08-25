@@ -1,9 +1,9 @@
 #include <filesystem>
-#include <vector>
 #include <print>
 
 #include "src/lexer.hh"
 #include "src/parser.hh"
+#include "src/interpreter.hh"
 
 int
 main(int argc, char** argv)
@@ -21,5 +21,7 @@ main(int argc, char** argv)
 	}
 
 	Parser parser(std::move(lexer));
-	parser.parse();
+	ASTProgram ast = parser.parse();
+	Interpreter interpreter;
+	interpreter.interpret(ast);
 }
