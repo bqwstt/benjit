@@ -39,22 +39,19 @@ Lexer::consume_token()
         return Token(TokenKind::Eof, TokenPos{m_line, m_column});
 
     char character = read_char();
-    while (!is_at_end()) {
+    while (true) {
+        if (is_at_end())
+            return Token(TokenKind::Eof, TokenPos{m_line, m_column});
+
         // Read whitespace
-        switch (character) {
-            case ' ':
-            case '\r':
-            case '\t':
-                character = read_char();
-                continue;
-            case '\n':
-                set_new_line();
-                character = read_char();
-                continue;
-            default:
-                break;
+        if (character == ' ' || character == '\r' || character == '\t') {
+            character = read_char();
+        } else if (character == '\n') {
+            set_new_line();
+            character = read_char();
+        } else {
+            break;
         }
-        break;
     }
 
     if (character == '#') {
