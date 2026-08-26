@@ -68,7 +68,6 @@ public:
     Token(const char* literal, const TokenKind& kind, TokenPos pos)
         : m_literal(literal), m_kind(kind), m_pos(pos) {}
     Token(const Token& token) = default;
-    // Token(Token&& token) noexcept = default;
     ~Token() = default;
 
     [[nodiscard]] std::string to_string() const;

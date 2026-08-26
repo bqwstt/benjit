@@ -15,7 +15,6 @@ public:
     Environment() = default;
     ~Environment() = default;
 
-    // void add_variable(const Variable2& var) { m_variables.emplace_back(var); }
     void set_variable(const std::string& var, Value value) { m_variables[var] = value; }
     Value get_variable_value(std::string name) { return m_variables[name]; }
 
