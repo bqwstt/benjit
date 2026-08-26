@@ -148,6 +148,7 @@ Lexer::translate(const char character) noexcept
                                        m_source_code,
                                        m_line,
                                        m_column);
+                break;
             }
     }
 

@@ -25,6 +25,10 @@ private:
 
     void consume_token();
 
+    bool is_at_end() const noexcept {
+        return m_current_token.kind() == TokenKind::Illegal || m_current_token.kind() == TokenKind::Eof;
+    }
+
     [[nodiscard]] std::shared_ptr<ASTNode> parse_statement();
     [[nodiscard]] std::shared_ptr<ASTExpression> parse_expression(uint8_t precedence_limit = 0);
     [[nodiscard]] std::shared_ptr<ASTVariableAssignment> parse_assignment();

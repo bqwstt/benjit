@@ -9,7 +9,7 @@ Parser::consume_token()
 {
     // @FIXME: If the file ends with a newline, this always returns Illegal and loops infinitely
     m_current_token = m_next_token;
-    if (m_current_token.kind() == TokenKind::Illegal || m_current_token.kind() == TokenKind::Eof)
+    if (is_at_end())
         return;
 
     m_next_token = m_lexer.consume_token();
@@ -19,7 +19,7 @@ ASTProgram
 Parser::parse()
 {
     ASTProgram program;
-    while (m_current_token.kind() != TokenKind::Eof) {
+    while (!is_at_end()) {
         ASTPtr stmt = parse_statement();
         if (stmt != nullptr) {
             program.add_statement(stmt);
