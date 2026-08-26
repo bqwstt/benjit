@@ -17,14 +17,12 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
 {
     if (const auto& variable_assignment = dynamic_pointer_cast<ASTVariableAssignment>(stmt)) {
         double result = evaluate_expression(variable_assignment->expression());
-        m_environment.tie_value(variable_assignment->identifier(), result);
+        m_environment.add_variable(variable_assignment->identifier().name(), result);
     } else if (const auto& func = dynamic_pointer_cast<ASTFunctionDeclaration>(stmt)) {
-        for (const auto& node : func->body()) {
-            interpret_statement(node);
-        }
+        m_environment.add_function(func->func_name().name());
     } else if (const auto& print = dynamic_pointer_cast<ASTPrint>(stmt)) {
         ASTIdentifier param = print->param();
-        double value = m_environment.get_value(param);
+        double value = m_environment.get_variable_value(param.name());
         print->print(value);
     }
 }
