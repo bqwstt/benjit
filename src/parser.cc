@@ -19,11 +19,14 @@ ASTProgram
 Parser::parse()
 {
     ASTProgram program;
-    while (!is_at_end()) {
+    while (!is_at_end() && !m_had_error) {
         ASTPtr stmt = parse_statement();
         if (stmt != nullptr) {
             program.add_statement(stmt);
         }
+
+        if (m_lexer.had_error())
+            m_had_error = true;
     }
 
     return program;
@@ -112,7 +115,7 @@ Parser::parse_function()
     consume_token(); // Consume 'is' keyword
 
     std::vector<ASTPtr> body;
-    while (m_current_token.kind() != TokenKind::End) {
+    while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
         auto stmt = parse_statement();
         body.push_back(std::move(stmt));
     }

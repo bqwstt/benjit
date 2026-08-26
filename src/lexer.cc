@@ -1,5 +1,4 @@
 #include <fstream>
-#include <print>
 #include <sstream>
 #include <cctype>
 #include <format>
@@ -25,6 +24,7 @@ Lexer::Lexer(const std::filesystem::path& source_file)
 {
     if (!std::filesystem::exists(source_file)) {
         std::string msg = std::format("file '{}' does not exist.", source_file.string());
+        m_had_error = true;
         Reporter::report_error(msg);
         return;
     }
@@ -84,7 +84,7 @@ Lexer::translate(const char character) noexcept
                 }
                 
                 Reporter::report_error_at("number cannot start with a dot.",
-                                      m_source_code,
+                                      m_current_line,
                                       m_line,
                                       m_column);
                 m_had_error = true;
@@ -143,15 +143,19 @@ Lexer::translate(const char character) noexcept
                 return translate_sequence(character);
             else if (std::isdigit(character))
                 return translate_digit_literal(character);
-            else {
-                Reporter::report_error_at("Unknown token.",
-                                       m_source_code,
-                                       m_line,
-                                       m_column);
-                break;
-            }
     }
 
+    // Illegal token, advance cursor and display error
+    uint32_t column = m_column;
+    while (peek() != '\n') {
+        std::ignore = read_char();
+    }
+
+    m_had_error = true;
+    Reporter::report_error_at("Unknown token.",
+                            m_current_line,
+                            m_line,
+                            column);
     return Token(TokenKind::Illegal, pos);
 }
 
@@ -174,6 +178,10 @@ Lexer::translate_sequence(const char begin) noexcept
         current_char = next_char;
         advance_if(eligible_for_identifier(next_char));
     }
+
+    // The current line already had the first character from the former iteration,
+    // skip it.
+    m_current_line += sequence.substr(1);
 
     if (k_keywords.contains(sequence)) {
         // Found keyword.
@@ -211,7 +219,7 @@ Lexer::translate_digit_literal(const char begin) noexcept
                 }
 
                 Reporter::report_error_at("number cannot contain more than one dot.",
-                                       m_source_code,
+                                       m_current_line,
                                        m_line,
                                        m_column);
                 m_had_error = true;
@@ -235,7 +243,7 @@ Lexer::translate_digit_literal(const char begin) noexcept
 
     if (literal.ends_with(".")) {
         Reporter::report_error_at("number cannot end with a dot.",
-                               m_source_code,
+                               m_current_line,
                                m_line,
                                m_column);
         m_had_error = true;
@@ -248,8 +256,11 @@ Lexer::translate_digit_literal(const char begin) noexcept
 inline char
 Lexer::read_char()
 {
+    char current_char = m_source_code[m_current];
     m_column += 1;
-    return m_source_code[m_current++];
+    m_current += 1;
+    m_current_line += current_char;
+    return current_char;
 }
 
 bool
@@ -323,7 +334,10 @@ Lexer::is_stop(const char character) const noexcept
 inline void
 Lexer::advance_if(bool cond) noexcept
 {
-    if (cond) m_current += 1;
+    if (cond) {
+        m_current += 1;
+        m_column += 1;
+    }
 }
 
 inline void
@@ -331,4 +345,5 @@ Lexer::set_new_line() noexcept
 {
     m_line += 1;
     m_column = 0;
+    m_current_line = "";
 }

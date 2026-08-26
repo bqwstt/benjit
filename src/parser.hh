@@ -14,14 +14,16 @@ public:
         consume_token();
         consume_token();
     }
-
     ~Parser() = default;
 
     ASTProgram parse();
+
+    bool had_error() const noexcept { return m_had_error; }
 private:
     Lexer m_lexer;
     Token m_current_token;
     Token m_next_token;
+    bool m_had_error = false;
 
     void consume_token();
 

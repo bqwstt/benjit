@@ -16,12 +16,12 @@ main(int argc, char** argv)
     const auto path = std::filesystem::path(argv[1]);
 
     Lexer lexer(path);
-    if (lexer.had_error()) {
-        return 65;
-	}
-
 	Parser parser(std::move(lexer));
 	ASTProgram ast = parser.parse();
+	if (parser.had_error()) {
+		return 65;
+	}
+
 	Interpreter interpreter;
 	interpreter.interpret(ast);
 }

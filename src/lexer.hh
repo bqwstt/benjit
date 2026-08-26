@@ -38,6 +38,8 @@ private:
     uint32_t m_line = 1;
     uint32_t m_column = 1;
 
+    std::string m_current_line;
+
     /// Whether it failed scanning.
     bool m_had_error = false;
 
