@@ -114,8 +114,8 @@ public:
         , m_expression(std::move(expr)) {}
     ~ASTVariableAssignment() = default;
 
-    const ASTIdentifier& identifier() { return m_identifier; }
-    const ASTExprPtr& expression() { return m_expression; }
+    const ASTIdentifier& identifier() const noexcept { return m_identifier; }
+    const ASTExprPtr& expression() const noexcept { return m_expression; }
 private:
     ASTIdentifier m_identifier;
     ASTExprPtr m_expression;
