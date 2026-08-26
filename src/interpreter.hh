@@ -21,14 +21,23 @@ private:
     Value m_value;
 };
 
+// @TODO: This function class is exactly the same as the AST one.
+// Simplify!
 class Function {
 public:
     Function() = delete;
     explicit Function(std::string name) : m_name(name) {}
+    Function(std::string name, const std::vector<ASTPtr> body)
+        : m_name(name)
+        , m_body(body) {}
     ~Function() = default;
+
+    std::string name() const noexcept { return m_name; }
+    std::vector<ASTPtr> body() const noexcept { return m_body; }
 private:
     std::string m_name;
     std::vector<Variable> m_variables;
+    std::vector<ASTPtr> m_body;
 };
 
 class Environment {
@@ -37,7 +46,7 @@ public:
     ~Environment() = default;
 
     void add_variable(std::string name, Value value) { m_variables.emplace_back(name, value); }
-    void add_function(std::string name) { m_functions.emplace_back(name); }
+    void add_function(const Function& func) { m_functions.push_back(func); }
 
     Value get_variable_value(std::string name) {
         auto it = std::find_if(m_variables.begin(), m_variables.end(), [&](const Variable& v) {
@@ -45,6 +54,14 @@ public:
         });
 
         return it->value();
+    }
+
+    std::vector<ASTPtr> get_function_body(std::string name) {
+        auto it = std::find_if(m_functions.begin(), m_functions.end(), [&](const Function& f) {
+            return f.name() == name;
+        });
+
+        return it->body();
     }
 private:
     // @TODO: Reconsider usage of vector vs something like std::unordered_set

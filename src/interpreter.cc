@@ -18,8 +18,14 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
     if (const auto& variable_assignment = dynamic_pointer_cast<ASTVariableAssignment>(stmt)) {
         double result = evaluate_expression(variable_assignment->expression());
         m_environment.add_variable(variable_assignment->identifier().name(), result);
-    } else if (const auto& func = dynamic_pointer_cast<ASTFunctionDeclaration>(stmt)) {
-        m_environment.add_function(func->func_name().name());
+    } else if (const auto& func_decl = dynamic_pointer_cast<ASTFunctionDeclaration>(stmt)) {
+        Function func(func_decl->func_name().name(), func_decl->body());
+        m_environment.add_function(func);
+    } else if (const auto& func_call = dynamic_pointer_cast<ASTFunctionCall>(stmt)) {
+        const auto& body = m_environment.get_function_body(func_call->func_name().name());
+        for (const auto& s : body) {
+            interpret_statement(s);
+        }
     } else if (const auto& print = dynamic_pointer_cast<ASTPrint>(stmt)) {
         ASTIdentifier param = print->param();
         double value = m_environment.get_variable_value(param.name());

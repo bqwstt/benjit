@@ -34,7 +34,8 @@ private:
     [[nodiscard]] std::shared_ptr<ASTNode> parse_statement();
     [[nodiscard]] std::shared_ptr<ASTExpression> parse_expression(uint8_t precedence_limit = 0);
     [[nodiscard]] std::shared_ptr<ASTVariableAssignment> parse_assignment();
-    [[nodiscard]] std::shared_ptr<ASTFunctionDeclaration> parse_function();
+    [[nodiscard]] std::shared_ptr<ASTFunctionDeclaration> parse_function_declaration();
+    [[nodiscard]] std::shared_ptr<ASTFunctionCall> parse_function_call();
     [[nodiscard]] std::shared_ptr<ASTPrint> parse_print();
 };
 

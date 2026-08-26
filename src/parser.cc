@@ -47,11 +47,17 @@ Parser::parse_statement()
             break;
         }
         case TokenKind::Algorithm: {
-            stmt = parse_function();
+            stmt = parse_function_declaration();
             break;
         }
         case TokenKind::Print: {
             stmt = parse_print();
+            break;
+        }
+        case TokenKind::Identifier: {
+            if (m_next_token.kind() == TokenKind::OpenParenthesis) {
+                stmt = parse_function_call();
+            }
             break;
         }
         default: break;
@@ -103,7 +109,7 @@ Parser::parse_assignment()
 }
 
 std::shared_ptr<ASTFunctionDeclaration>
-Parser::parse_function()
+Parser::parse_function_declaration()
 {
     consume_token(); // Consume 'algorithm' keyword
     ASTIdentifier func_name(m_current_token.literal());
@@ -124,6 +130,17 @@ Parser::parse_function()
 
     // @TODO: Anything other than variables!
     return std::make_shared<ASTFunctionDeclaration>(func_name, body);
+}
+
+std::shared_ptr<ASTFunctionCall>
+Parser::parse_function_call()
+{
+    ASTIdentifier func_name(m_current_token.literal());
+    consume_token(); // Consume func name
+    consume_token(); // Consume open paren
+    consume_token(); // Consume close paren
+
+    return std::make_shared<ASTFunctionCall>(func_name);
 }
 
 std::shared_ptr<ASTPrint>

@@ -16,6 +16,7 @@ enum class ASTKind {
     Keyword,
     VariableAssignment,
     FunctionDeclaration,
+    FunctionCall,
     Print,
 };
 
@@ -139,6 +140,23 @@ private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;
     std::vector<ASTPtr> m_body;
+};
+
+class ASTFunctionCall : public ASTNode {
+public:
+    ASTFunctionCall(const ASTIdentifier& name)
+        : ASTNode(ASTKind::FunctionCall)
+        , m_func_name(name) {}
+    ASTFunctionCall(const ASTIdentifier& name, std::span<ASTIdentifier> parameters)
+        : ASTNode(ASTKind::FunctionCall)
+        , m_func_name(name)
+        , m_parameters(std::from_range, parameters) {}
+    ~ASTFunctionCall() = default;
+
+    const ASTIdentifier& func_name() const noexcept { return m_func_name; }
+private:
+    ASTIdentifier m_func_name;
+    std::vector<ASTIdentifier> m_parameters;
 };
 
 class ASTPrint : public ASTNode {
