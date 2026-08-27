@@ -58,6 +58,12 @@ Parser::parse_statement()
             if (m_next_token.kind() == TokenKind::OpenParenthesis) {
                 stmt = parse_function_call();
             }
+
+            if (m_next_token.kind() == TokenKind::Assignment) {
+                // Variable re-assignment
+                stmt = parse_assignment();
+                break;
+            }
             break;
         }
         default: break;
