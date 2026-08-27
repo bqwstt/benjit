@@ -4,6 +4,16 @@
 #include <cmath>
 #include <string>
 
+Function::Function(const FunctionDecl& decl)
+    : m_decl(decl), m_scope(ScopeKind::Function)
+{
+}
+
+Function::Function(const FunctionDecl& decl, const Scope& scope)
+    : m_decl(decl), m_scope(scope)
+{
+}
+
 void
 Interpreter::interpret(const ASTProgram& program)
 {
@@ -31,7 +41,7 @@ Interpreter::interpret_variable_assignment(const std::shared_ptr<ASTVariableAssi
 {
     std::string var_name = assignment->identifier().name();
     double result = evaluate_expression(assignment->expression());
-    m_environment.set_variable(var_name, result);
+    m_environment.current_scope().tie_variable(var_name, result);
 }
 
 void
@@ -43,17 +53,25 @@ Interpreter::interpret_function_declaration(const std::shared_ptr<ASTFunctionDec
 void
 Interpreter::interpret_function_call(const std::shared_ptr<ASTFunctionCall>& func_call)
 {
-    const auto& body = m_environment.get_function_body(func_call->func_name().name());
-    for (const auto& s : body) {
+    auto func = m_environment.get_function(func_call->func_name().name());
+    Scope old_scope = m_environment.current_scope();
+
+    // Copy the scope (a.k.a. symbol table) to the function's scope
+    m_environment.current_scope() = func.scope();
+
+    for (const auto& s : func.func_body()) {
         interpret_statement(s);
     }
+
+    // Restore variables to previous point
+    m_environment.current_scope() = old_scope;
 }
 
 void
 Interpreter::interpret_print(const std::shared_ptr<ASTPrint>& print)
 {
     ASTIdentifier param = print->param();
-    double value = m_environment.get_variable_value(param.name());
+    double value = m_environment.current_scope().get_variable_value(param.name());
     print->print(value);
 }
 

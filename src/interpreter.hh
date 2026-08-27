@@ -6,31 +6,68 @@
 
 /// For now, all values are numbers, but it may be possible to add Strings or Bools too.
 using Value = double;
+using FunctionDecl = std::shared_ptr<ASTFunctionDeclaration>;
 
-using Variable = std::shared_ptr<ASTVariableAssignment>;
-using Function = std::shared_ptr<ASTFunctionDeclaration>;
+enum class ScopeKind {
+    Global = 0,
+    Function,
+    ForBlock,
+    IfBlock,
+};
+
+class Scope {
+public:
+    Scope() : m_kind(ScopeKind::Global) {}
+    Scope(ScopeKind kind) : m_kind(kind) {}
+    Scope(const Scope& other) = default;
+    ~Scope() = default;
+
+    bool contains_variable(const std::string& var) { return m_variables.contains(var); }
+    void tie_variable(const std::string& var, Value value) { m_variables[var] = value; };
+    Value get_variable_value(const std::string& var) { return m_variables[var]; };
+
+    void set_kind(ScopeKind kind) { m_kind = kind; }
+private:
+    ScopeKind m_kind = ScopeKind::Global;
+    std::unordered_map<std::string, Value> m_variables;
+};
+
+class Function {
+public:
+    Function() = delete;
+    Function(const FunctionDecl& decl);
+    Function(const FunctionDecl& decl, const Scope& scope);
+    ~Function() = default;
+
+    std::string func_name() const { return m_decl->func_name().name(); }
+    std::vector<ASTPtr> func_body() const { return m_decl->body(); }
+
+    Scope& scope() noexcept { return m_scope; }
+private:
+    FunctionDecl m_decl;
+    Scope m_scope;
+};
 
 class Environment {
 public:
     Environment() = default;
     ~Environment() = default;
 
-    void set_variable(const std::string& var, Value value) { m_variables[var] = value; }
-    Value get_variable_value(std::string name) { return m_variables[name]; }
-
     void add_function(const Function& func) { m_functions.push_back(func); }
 
-    std::vector<ASTPtr> get_function_body(std::string name) {
+    const Function& get_function(std::string name) const {
         auto it = std::find_if(m_functions.begin(), m_functions.end(), [&](const Function& f) {
-            return f->func_name().name() == name;
+            return f.func_name() == name;
         });
 
-        return (*it)->body();
+        return *it;
     }
+
+    Scope& current_scope() noexcept { return m_current_scope; }
 private:
     // @TODO: Reconsider usage of vector vs something like std::unordered_set
-    std::unordered_map<std::string, Value> m_variables;
     std::vector<Function> m_functions;
+    Scope m_current_scope;
 };
 
 class Interpreter {
