@@ -56,13 +56,25 @@ Token::to_string() const
 }
 
 bool
-Token::is_operator() const noexcept
+Token::is_math_operator() const noexcept
 {
     return m_kind == TokenKind::Plus
         || m_kind == TokenKind::Minus
         || m_kind == TokenKind::Multiply
         || m_kind == TokenKind::Divide
         || m_kind == TokenKind::Exponent;
+}
+
+bool
+Token::is_logical_operator() const noexcept
+{
+    return m_kind == TokenKind::GreaterThan
+        || m_kind == TokenKind::GreaterEquals
+        || m_kind == TokenKind::LessThan
+        || m_kind == TokenKind::DoubleEquals
+        || m_kind == TokenKind::NotEquals
+        || m_kind == TokenKind::Or
+        || m_kind == TokenKind::And;
 }
 
 unsigned

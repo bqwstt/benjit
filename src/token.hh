@@ -76,7 +76,8 @@ public:
     [[nodiscard]] TokenKind kind() const { return m_kind; };
     [[nodiscard]] TokenLiteral literal() const { return m_literal; }
     
-    bool is_operator() const noexcept;
+    bool is_math_operator() const noexcept;
+    bool is_logical_operator() const noexcept;
     unsigned operator_precedence() const noexcept;
     OperatorAssociativity operator_associativity() const noexcept;
 private:

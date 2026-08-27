@@ -106,7 +106,7 @@ private:
 
     [[nodiscard]] Value evaluate_expression(const ASTExprPtr& expr);
     [[nodiscard]] Value evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
-    [[nodiscard]] double evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop);
+    [[nodiscard]] Value evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop);
 
     Environment m_environment;
 };

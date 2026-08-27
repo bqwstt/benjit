@@ -1,5 +1,6 @@
 #include "parser.hh"
 #include "ast.hh"
+#include "reporter.hh"
 #include "token.hh"
 #include <memory>
 #include <print>
@@ -80,7 +81,13 @@ Parser::parse_statement()
             }
             break;
         }
-        default: break;
+        default: {
+            m_had_error = true;
+
+            // @FIXME: Proper error reporting :)
+            Reporter::report_error("Can't parse!");
+            break;
+        }
     }
 
     return stmt;
@@ -89,6 +96,7 @@ Parser::parse_statement()
 std::shared_ptr<ASTExpression>
 Parser::parse_expression(uint8_t precedence_limit)
 {
+    // @FIXME: Check for parenthesis.
     std::shared_ptr<ASTExpression> expr;
     if (m_current_token.kind() == TokenKind::NumericLiteral) {
         expr = std::make_shared<ASTNumericExpr>(m_current_token.literal());
@@ -101,14 +109,24 @@ Parser::parse_expression(uint8_t precedence_limit)
             expr = std::make_shared<ASTIdentifier>(m_current_token.literal());
             consume_token(); // Consume the identifier
         }
-    } else if (m_current_token.kind() == TokenKind::True || m_current_token.kind() == TokenKind::False) {
-        // We don't want to do binary ops for booleans, so we return the expression directly.
-        bool is_true_keyword = m_current_token.kind() == TokenKind::True;
-        consume_token(); // Consume the boolean
-        return std::make_shared<ASTBooleanExpr>(is_true_keyword);
     }
 
-    while (m_current_token.is_operator()) {
+    if (m_current_token.kind() == TokenKind::True || m_current_token.kind() == TokenKind::False) {
+        bool is_true_keyword = m_current_token.kind() == TokenKind::True;
+        consume_token(); // Consume the boolean
+        expr = std::make_shared<ASTBooleanExpr>(is_true_keyword);
+    }
+
+    if (m_current_token.is_logical_operator()) {
+        Token op_token = m_current_token;
+        consume_token(); // Consume the operator
+
+        auto right = parse_expression();
+        return std::make_shared<ASTBinaryOp>(op_token, expr, right);
+    }
+
+    while (m_current_token.is_math_operator()) {
+        // Following Pratt parser's logic
         uint8_t prec = m_current_token.operator_precedence();
         uint8_t final_prec = prec;
 
@@ -121,12 +139,10 @@ Parser::parse_expression(uint8_t precedence_limit)
         }
 
         Token op_token = m_current_token;
-
         consume_token(); // Consume the operator
 
         auto right = parse_expression(final_prec);
-        auto binop = std::make_shared<ASTBinaryOp>(op_token, expr, right);
-        expr = std::move(binop);
+        expr = std::make_shared<ASTBinaryOp>(op_token, expr, right);
     }
 
     return expr;

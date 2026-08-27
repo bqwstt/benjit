@@ -135,19 +135,42 @@ Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func
     return NAN;
 }
 
-double
+Value
 Interpreter::evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop)
 {
-    double left = std::get<double>(evaluate_expression(binop->left()));
-    double right = std::get<double>(evaluate_expression(binop->right()));
+    Value left = evaluate_expression(binop->left());
+    Value right = evaluate_expression(binop->right());
     TokenKind op = binop->op().kind();
 
     switch (op) {
-        case TokenKind::Plus: return left + right;
-        case TokenKind::Minus: return left - right;
-        case TokenKind::Multiply: return left * right;
-        case TokenKind::Divide: return left / right;
-        case TokenKind::Exponent: return std::powl(left, right);
+        // #region Doubles
+        case TokenKind::Plus:
+            return std::get<double>(left) + std::get<double>(right);
+        case TokenKind::Minus:
+            return std::get<double>(left) - std::get<double>(right);
+        case TokenKind::Multiply:
+            return std::get<double>(left) * std::get<double>(right);
+        case TokenKind::Divide:
+            return std::get<double>(left) / std::get<double>(right);
+        case TokenKind::Exponent:
+            return static_cast<double>(std::powl(std::get<double>(left), std::get<double>(right)));
+        case TokenKind::LessThan:
+            return std::get<double>(left) < std::get<double>(right);
+        case TokenKind::LessEquals:
+            return std::get<double>(left) <= std::get<double>(right);
+        case TokenKind::GreaterThan:
+            return std::get<double>(left) > std::get<double>(right);
+        case TokenKind::GreaterEquals:
+            return std::get<double>(left) >= std::get<double>(right);
+        // #region Booleans
+        case TokenKind::And:
+            return std::get<bool>(left) && std::get<bool>(right);
+        case TokenKind::Or:
+            return std::get<bool>(left) || std::get<bool>(right);
+        case TokenKind::DoubleEquals:
+            return std::get<bool>(left) == std::get<bool>(right);
+        case TokenKind::NotEquals:
+            return std::get<bool>(left) != std::get<bool>(right);
         default: break;
     }
 
