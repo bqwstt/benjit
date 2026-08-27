@@ -78,9 +78,15 @@ Interpreter::interpret_print(const std::shared_ptr<ASTPrint>& print)
 double
 Interpreter::evaluate_expression(const ASTExprPtr& expr)
 {
+    if (const auto& identifier = dynamic_pointer_cast<ASTIdentifier>(expr)) {
+        return m_environment.current_scope().get_variable_value(identifier->name());
+    }
+
     if (const auto& numeric = dynamic_pointer_cast<ASTNumericExpr>(expr)) {
         return std::stod(numeric->literal());
-    } else if (const auto& binop = dynamic_pointer_cast<ASTBinaryOp>(expr)) {
+    }
+
+    if (const auto& binop = dynamic_pointer_cast<ASTBinaryOp>(expr)) {
         double left = evaluate_expression(binop->left()) ;
         double right = evaluate_expression(binop->right()) ;
         TokenKind op = binop->op().kind();

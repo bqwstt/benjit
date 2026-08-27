@@ -48,23 +48,6 @@ private:
     std::vector<ASTPtr> m_children;
 };
 
-class ASTIdentifier : public ASTNode {
-public:
-    ASTIdentifier() = default;
-    ASTIdentifier(const char* name)
-        : ASTNode(ASTKind::Identifier)
-        , m_name(name) {}
-    ASTIdentifier(const std::string& name)
-        : ASTNode(ASTKind::Identifier) 
-        , m_name(name) {}
-    ASTIdentifier(const ASTIdentifier& other) = default;
-    ~ASTIdentifier() = default;
-
-    const std::string& name() const noexcept { return m_name; }
-private:
-    std::string m_name;
-};
-
 class ASTExpression : public ASTNode {
 public:
     ASTExpression() : ASTNode(ASTKind::NumericExpr) {}
@@ -106,6 +89,23 @@ private:
     ASTExprPtr m_right;
 };
 
+class ASTIdentifier : public ASTExpression {
+public:
+    ASTIdentifier() = default;
+    ASTIdentifier(const char* name)
+        : ASTExpression(ASTKind::Identifier)
+        , m_name(name) {}
+    ASTIdentifier(const std::string& name)
+        : ASTExpression(ASTKind::Identifier)
+        , m_name(name) {}
+    ASTIdentifier(const ASTIdentifier& other) = default;
+    ~ASTIdentifier() = default;
+
+    const std::string& name() const noexcept { return m_name; }
+private:
+    std::string m_name;
+};
+
 class ASTVariableAssignment : public ASTNode {
 public:
     ASTVariableAssignment(const ASTIdentifier& ident, ASTExprPtr expr)
@@ -140,15 +140,16 @@ private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;
     std::vector<ASTPtr> m_body;
+    ASTExprPtr m_return_expr;
 };
 
-class ASTFunctionCall : public ASTNode {
+class ASTFunctionCall : public ASTExpression {
 public:
     ASTFunctionCall(const ASTIdentifier& name)
-        : ASTNode(ASTKind::FunctionCall)
+        : ASTExpression(ASTKind::FunctionCall)
         , m_func_name(name) {}
     ASTFunctionCall(const ASTIdentifier& name, std::span<ASTIdentifier> parameters)
-        : ASTNode(ASTKind::FunctionCall)
+        : ASTExpression(ASTKind::FunctionCall)
         , m_func_name(name)
         , m_parameters(std::from_range, parameters) {}
     ~ASTFunctionCall() = default;

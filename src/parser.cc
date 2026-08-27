@@ -70,8 +70,12 @@ std::shared_ptr<ASTExpression>
 Parser::parse_expression(uint8_t precedence_limit)
 {
     std::shared_ptr<ASTExpression> expr;
-    expr = std::make_shared<ASTNumericExpr>(m_current_token.literal());
-    consume_token(); // Consume the number
+    if (m_current_token.kind() == TokenKind::NumericLiteral)
+        expr = std::make_shared<ASTNumericExpr>(m_current_token.literal());
+    else
+        expr = std::make_shared<ASTIdentifier>(m_current_token.literal());
+
+    consume_token(); // Consume the number/identifier
 
     while (m_current_token.is_operator()) {
         uint8_t prec = m_current_token.operator_precedence();
