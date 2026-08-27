@@ -32,6 +32,7 @@ Token::to_string() const
         CASE(TokenKind::Identifier, "Identifier");
         CASE(TokenKind::NumericLiteral, "NumericLiteral");
         CASE(TokenKind::If, "If");
+        CASE(TokenKind::Else, "Else");
         CASE(TokenKind::True, "True");
         CASE(TokenKind::False, "False");
         CASE(TokenKind::For, "For");

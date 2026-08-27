@@ -34,6 +34,8 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
         interpret_function_call(func_call);
     } else if (const auto& loop = dynamic_pointer_cast<ASTLoop>(stmt)) {
         interpret_loop(loop);
+    } else if (const auto& if_stmt = dynamic_pointer_cast<ASTIf>(stmt)) {
+        interpret_if(if_stmt);
     } else if (const auto& print = dynamic_pointer_cast<ASTPrint>(stmt)) {
         interpret_print(print);
     }
@@ -80,6 +82,18 @@ Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
         }
 
         can_iterate = std::get<bool>(evaluate_expression(loop->condition()));
+    }
+}
+
+void
+Interpreter::interpret_if(const std::shared_ptr<ASTIf>& if_stmt)
+{
+    VariableScopeGuard guard(m_environment);
+
+    bool cond_holds_true = std::get<bool>(evaluate_expression(if_stmt->condition()));
+    const auto& body_to_run = cond_holds_true ? if_stmt->body() : if_stmt->else_body();
+    for (const auto& node : body_to_run) {
+        interpret_statement(node);
     }
 }
 

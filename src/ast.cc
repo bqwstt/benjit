@@ -16,6 +16,7 @@ ASTNode::to_string() const
         case ASTKind::Loop: return "Loop";
         case ASTKind::Break: return "Break";
         case ASTKind::Continue: return "Continue";
+        case ASTKind::If: return "If";
         case ASTKind::VariableAssignment: return "VariableAssignment";
         case ASTKind::Keyword: return "Keyword";
         case ASTKind::Print: return "Print";

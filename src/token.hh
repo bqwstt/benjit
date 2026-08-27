@@ -39,6 +39,7 @@ enum class TokenKind : unsigned short {
 
     // Keywords
     If,
+    Else,
     True,
     False,
     For,

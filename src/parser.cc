@@ -55,8 +55,12 @@ Parser::parse_statement()
             stmt = parse_print();
             break;
         }
+        case TokenKind::If: {
+            stmt = parse_if();
+            break;
+        }
         case TokenKind::For: {
-            stmt = parse_for_loop();
+            stmt = parse_loop();
             break;
         }
         case TokenKind::Break: {
@@ -201,7 +205,7 @@ Parser::parse_function_call()
 }
 
 std::shared_ptr<ASTLoop>
-Parser::parse_for_loop()
+Parser::parse_loop()
 {
     consume_token(); // Consume 'for' keyword
     auto condition = parse_expression();
@@ -216,6 +220,39 @@ Parser::parse_for_loop()
     consume_token(); // Consume 'end' keyword
 
     return std::make_shared<ASTLoop>(condition, body);
+}
+
+std::shared_ptr<ASTIf>
+Parser::parse_if()
+{
+    consume_token(); // Consume 'if' keyword
+    auto condition = parse_expression();
+    consume_token(); // Consume 'then' keyword
+
+    std::vector<ASTPtr> body;
+    auto is_end_of_branch = [&](TokenKind kind) {
+        return kind == TokenKind::Else || kind == TokenKind::End;
+    };
+
+    while (!is_at_end() && !is_end_of_branch(m_current_token.kind())) {
+        auto stmt = parse_statement();
+        body.push_back(std::move(stmt));
+    }
+
+    // 'else' branch
+    std::vector<ASTPtr> else_body;
+    if (m_current_token.kind() == TokenKind::Else) {
+        consume_token(); // Consume 'else' keyword
+
+        while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
+            auto stmt = parse_statement();
+            else_body.push_back(std::move(stmt));
+        }
+    }
+
+    consume_token(); // Consume 'end' keyword
+
+    return std::make_shared<ASTIf>(condition, body, else_body);
 }
 
 std::shared_ptr<ASTPrint>

@@ -10,6 +10,7 @@
 static
 std::unordered_map<std::string, TokenKind> k_keywords {
     {"if", TokenKind::If},
+    {"else", TokenKind::Else},
     {"true", TokenKind::True},
     {"false", TokenKind::False},
     {"for", TokenKind::For},

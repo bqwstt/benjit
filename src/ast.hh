@@ -21,6 +21,7 @@ enum class ASTKind {
     Loop,
     Break,
     Continue,
+    If,
     Print,
 };
 
@@ -183,27 +184,28 @@ private:
     std::vector<ASTIdentifier> m_parameters;
 };
 
-class ASTLoop : public ASTNode {
+class ASTConditional : public ASTNode {
 public:
-    ASTLoop() = delete;
-    ASTLoop(const ASTExprPtr& condition)
-        : ASTNode(ASTKind::Loop)
-        , m_condition(condition) {}
-    ASTLoop(std::span<ASTPtr> body)
-        : ASTNode(ASTKind::Loop)
-        , m_condition(std::make_shared<ASTBooleanExpr>(true))
-        , m_body(std::from_range, body) {}
-    ASTLoop(const ASTExprPtr& condition, std::span<ASTPtr> body)
-        : ASTNode(ASTKind::Loop)
+    ASTConditional() = delete;
+    ASTConditional(ASTKind kind, const ASTExprPtr& condition, std::span<ASTPtr> body)
+        : ASTNode(kind)
         , m_condition(condition)
         , m_body(std::from_range, body) {}
-    ~ASTLoop() = default;
+    ~ASTConditional() = default;
 
     const ASTExprPtr& condition() const noexcept { return m_condition; }
     const std::vector<ASTPtr> body() const noexcept { return m_body; }
 private:
     ASTExprPtr m_condition;
     std::vector<ASTPtr> m_body;
+};
+
+class ASTLoop : public ASTConditional {
+public:
+    ASTLoop() = delete;
+    ASTLoop(const ASTExprPtr& condition, std::span<ASTPtr> body)
+        : ASTConditional(ASTKind::Loop, condition, body) {}
+    ~ASTLoop() = default;
 };
 
 class ASTBreak : public ASTNode {
@@ -216,6 +218,21 @@ class ASTContinue : public ASTNode {
 public:
     ASTContinue() : ASTNode(ASTKind::Continue) {}
     ~ASTContinue() = default;
+};
+
+class ASTIf : public ASTConditional {
+public:
+    ASTIf() = delete;
+    ASTIf(const ASTExprPtr& condition, std::span<ASTPtr> body)
+        : ASTConditional(ASTKind::If, condition, body) {}
+    ASTIf(const ASTExprPtr& condition, std::span<ASTPtr> body, std::span<ASTPtr> else_body)
+        : ASTConditional(ASTKind::If, condition, body)
+        , m_else_body(std::from_range, else_body) {}
+    ~ASTIf() = default;
+
+    const std::vector<ASTPtr>& else_body() const noexcept { return m_else_body; }
+private:
+    std::vector<ASTPtr> m_else_body;
 };
 
 class ASTPrint : public ASTNode {

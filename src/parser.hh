@@ -36,7 +36,8 @@ private:
     [[nodiscard]] std::shared_ptr<ASTVariableAssignment> parse_assignment();
     [[nodiscard]] std::shared_ptr<ASTFunctionDeclaration> parse_function_declaration();
     [[nodiscard]] std::shared_ptr<ASTFunctionCall> parse_function_call();
-    [[nodiscard]] std::shared_ptr<ASTLoop> parse_for_loop();
+    [[nodiscard]] std::shared_ptr<ASTLoop> parse_loop();
+    [[nodiscard]] std::shared_ptr<ASTIf> parse_if();
     [[nodiscard]] std::shared_ptr<ASTPrint> parse_print();
 };
 
