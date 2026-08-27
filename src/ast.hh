@@ -121,12 +121,18 @@ private:
     ASTExprPtr m_expression;
 };
 
+// @TODO: Move ctors to .cc file?
 class ASTFunctionDeclaration : public ASTNode {
 public:
     ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTPtr> body)
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name)
         , m_body(std::from_range, body) {}
+    ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTPtr> body, const ASTExprPtr& return_expr)
+        : ASTNode(ASTKind::FunctionDeclaration)
+        , m_func_name(name)
+        , m_body(std::from_range, body)
+        , m_return_expr(return_expr) {}
     ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTIdentifier> parameters, std::span<ASTPtr> body)
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name)
@@ -136,6 +142,7 @@ public:
 
     const ASTIdentifier& func_name() const noexcept { return m_func_name; }
     const std::vector<ASTPtr>& body() const noexcept { return m_body; }
+    const ASTExprPtr& return_expr() const noexcept { return m_return_expr; }
 private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;

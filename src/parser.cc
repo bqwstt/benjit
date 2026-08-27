@@ -70,12 +70,18 @@ std::shared_ptr<ASTExpression>
 Parser::parse_expression(uint8_t precedence_limit)
 {
     std::shared_ptr<ASTExpression> expr;
-    if (m_current_token.kind() == TokenKind::NumericLiteral)
+    if (m_current_token.kind() == TokenKind::NumericLiteral) {
         expr = std::make_shared<ASTNumericExpr>(m_current_token.literal());
-    else
-        expr = std::make_shared<ASTIdentifier>(m_current_token.literal());
-
-    consume_token(); // Consume the number/identifier
+        consume_token(); // Consume the number
+    } else if (m_current_token.kind() == TokenKind::Identifier) {
+        // If found identifier + parenthesis, that's a function call.
+        if (m_next_token.kind() == TokenKind::OpenParenthesis) {
+            expr = parse_function_call();
+        } else {
+            expr = std::make_shared<ASTIdentifier>(m_current_token.literal());
+            consume_token(); // Consume the identifier
+        }
+    }
 
     while (m_current_token.is_operator()) {
         uint8_t prec = m_current_token.operator_precedence();
@@ -125,15 +131,25 @@ Parser::parse_function_declaration()
     consume_token(); // Consume 'is' keyword
 
     std::vector<ASTPtr> body;
-    while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
+    auto is_end_of_function = [&](const TokenKind kind) {
+        return kind == TokenKind::Return || kind == TokenKind::End;
+    };
+
+    while (!is_at_end() && !is_end_of_function(m_current_token.kind())) {
         auto stmt = parse_statement();
         body.push_back(std::move(stmt));
+    }
+
+    ASTExprPtr return_expr;
+    if (m_current_token.kind() == TokenKind::Return) {
+        consume_token(); // Consume 'return' keyword
+        return_expr = parse_expression();
     }
 
     consume_token(); // Consume 'end' keyword
 
     // @TODO: Anything other than variables!
-    return std::make_shared<ASTFunctionDeclaration>(func_name, body);
+    return std::make_shared<ASTFunctionDeclaration>(func_name, body, return_expr);
 }
 
 std::shared_ptr<ASTFunctionCall>

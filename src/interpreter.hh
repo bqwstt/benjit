@@ -23,7 +23,7 @@ public:
     ~Scope() = default;
 
     bool contains_variable(const std::string& var) { return m_variables.contains(var); }
-    void tie_variable(const std::string& var, Value value) { m_variables[var] = value; };
+    void tie_variable(const std::string& var, Value value) { m_variables.insert_or_assign(var, std::move(value)); };
     Value get_variable_value(const std::string& var) { return m_variables[var]; };
 
     void set_kind(ScopeKind kind) { m_kind = kind; }
@@ -41,6 +41,7 @@ public:
 
     std::string func_name() const { return m_decl->func_name().name(); }
     std::vector<ASTPtr> func_body() const { return m_decl->body(); }
+    ASTExprPtr return_expr() const { return m_decl->return_expr(); }
 
     Scope& scope() noexcept { return m_scope; }
 private:
@@ -70,6 +71,25 @@ private:
     Scope m_current_scope;
 };
 
+class ScopeGuard {
+public:
+    ScopeGuard(Environment& env)
+        : m_environment(env), m_old_scope(env.current_scope())
+    {
+        // Copy the scope (a.k.a. symbol table) to a new scope
+        m_environment.current_scope() = Scope(m_environment.current_scope());
+    }
+
+    ~ScopeGuard()
+    {
+        // Restore scope back to original
+        m_environment.current_scope() = m_old_scope;
+    }
+private:
+    Environment& m_environment;
+    Scope m_old_scope;
+};
+
 class Interpreter {
 public:
     Interpreter() = default;
@@ -83,7 +103,9 @@ private:
     void interpret_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
     void interpret_print(const std::shared_ptr<ASTPrint>& print);
 
-    double evaluate_expression(const ASTExprPtr& expr);
+    [[nodiscard]] double evaluate_expression(const ASTExprPtr& expr);
+    [[nodiscard]] double evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
+    [[nodiscard]] double evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop);
 
     Environment m_environment;
 };

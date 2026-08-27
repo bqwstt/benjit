@@ -53,18 +53,8 @@ Interpreter::interpret_function_declaration(const std::shared_ptr<ASTFunctionDec
 void
 Interpreter::interpret_function_call(const std::shared_ptr<ASTFunctionCall>& func_call)
 {
-    auto func = m_environment.get_function(func_call->func_name().name());
-    Scope old_scope = m_environment.current_scope();
-
-    // Copy the scope (a.k.a. symbol table) to the function's scope
-    m_environment.current_scope() = func.scope();
-
-    for (const auto& s : func.func_body()) {
-        interpret_statement(s);
-    }
-
-    // Restore variables to previous point
-    m_environment.current_scope() = old_scope;
+    // Evaluates the function ignoring the return value
+    std::ignore = evaluate_function_call(func_call);
 }
 
 void
@@ -86,19 +76,48 @@ Interpreter::evaluate_expression(const ASTExprPtr& expr)
         return std::stod(numeric->literal());
     }
 
-    if (const auto& binop = dynamic_pointer_cast<ASTBinaryOp>(expr)) {
-        double left = evaluate_expression(binop->left()) ;
-        double right = evaluate_expression(binop->right()) ;
-        TokenKind op = binop->op().kind();
+    if (const auto& func_call = dynamic_pointer_cast<ASTFunctionCall>(expr)) {
+        return evaluate_function_call(func_call);
+    }
 
-        switch (op) {
-            case TokenKind::Plus: return left + right;
-            case TokenKind::Minus: return left - right;
-            case TokenKind::Multiply: return left * right;
-            case TokenKind::Divide: return left / right;
-            case TokenKind::Exponent: return std::powl(left, right);
-            default: break;
-        }
+    if (const auto& binop = dynamic_pointer_cast<ASTBinaryOp>(expr)) {
+        return evaluate_binop(binop);
+    }
+
+    return NAN;
+}
+
+double
+Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func_call)
+{
+    ScopeGuard guard(m_environment);
+    auto func = m_environment.get_function(func_call->func_name().name());
+
+    for (const auto& s : func.func_body()) {
+        interpret_statement(s);
+    }
+
+    if (auto return_expr = func.return_expr()) {
+        return evaluate_expression(return_expr);
+    }
+
+    return NAN;
+}
+
+double
+Interpreter::evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop)
+{
+    double left = evaluate_expression(binop->left()) ;
+    double right = evaluate_expression(binop->right()) ;
+    TokenKind op = binop->op().kind();
+
+    switch (op) {
+        case TokenKind::Plus: return left + right;
+        case TokenKind::Minus: return left - right;
+        case TokenKind::Multiply: return left * right;
+        case TokenKind::Divide: return left / right;
+        case TokenKind::Exponent: return std::powl(left, right);
+        default: break;
     }
 
     return NAN;
