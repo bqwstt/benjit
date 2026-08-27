@@ -22,7 +22,6 @@ public:
     Scope(const Scope& other) = default;
     ~Scope() = default;
 
-    bool contains_variable(const std::string& var) { return m_variables.contains(var); }
     void tie_variable(const std::string& var, Value value) { m_variables.insert_or_assign(var, std::move(value)); };
     Value get_variable_value(const std::string& var) { return m_variables[var]; };
 
