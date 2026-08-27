@@ -18,7 +18,6 @@ enum class TokenKind : unsigned short {
     Multiply,           // *
     Divide,             // /
     Exponent,           // ^
-    Hash,               // #
     Comma,              // ,
     OpenParenthesis,    // (
     CloseParenthesis,   // )

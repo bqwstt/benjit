@@ -17,7 +17,6 @@ Token::to_string() const
         CASE(TokenKind::Multiply, "Multiply");
         CASE(TokenKind::Divide, "Divide");
         CASE(TokenKind::Exponent, "Exponent");
-        CASE(TokenKind::Hash, "Hash");
         CASE(TokenKind::Comma, "Comma");
         CASE(TokenKind::OpenParenthesis, "OpenParen");
         CASE(TokenKind::CloseParenthesis, "CloseParen");

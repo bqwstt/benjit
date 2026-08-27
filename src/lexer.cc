@@ -49,15 +49,13 @@ Lexer::consume_token()
         } else if (character == '\n') {
             set_new_line();
             character = read_char();
+        } else if (character == '#') {
+            // Found comment, skip the whole line.
+            while (character != '\n' && !is_at_end())
+                character = read_char();
         } else {
             break;
         }
-    }
-
-    if (character == '#') {
-        // Found comment, skip the whole line.
-        while (peek() != '\n' && !is_at_end())
-            character = read_char();
     }
 
     m_start = m_current;
@@ -93,7 +91,6 @@ Lexer::translate(const char character) noexcept
         case '*': return Token("*", TokenKind::Multiply, pos);
         case '/': return Token("/", TokenKind::Divide, pos);
         case '^': return Token("^", TokenKind::Exponent, pos);
-        case '#': return Token("#", TokenKind::Hash, pos);
         case '|':
             if (match('|'))
                 return Token("||", TokenKind::Or, pos);
