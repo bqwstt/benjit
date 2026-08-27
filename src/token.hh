@@ -44,6 +44,8 @@ enum class TokenKind : unsigned short {
     False,
     For,
     Do,
+    Break,
+    Continue,
     Return,
     Variable,
     Algorithm,

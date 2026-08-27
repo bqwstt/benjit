@@ -37,6 +37,8 @@ Token::to_string() const
         CASE(TokenKind::False, "False");
         CASE(TokenKind::For, "For");
         CASE(TokenKind::Do, "Do");
+        CASE(TokenKind::Break, "Break");
+        CASE(TokenKind::Continue, "Continue");
         CASE(TokenKind::Return, "Return");
         CASE(TokenKind::Variable, "Variable");
         CASE(TokenKind::Algorithm, "Algorithm");

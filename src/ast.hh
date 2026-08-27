@@ -18,6 +18,9 @@ enum class ASTKind {
     VariableAssignment,
     FunctionDeclaration,
     FunctionCall,
+    Loop,
+    Break,
+    Continue,
     Print,
 };
 
@@ -178,6 +181,41 @@ public:
 private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;
+};
+
+class ASTLoop : public ASTNode {
+public:
+    ASTLoop() = delete;
+    ASTLoop(const ASTExprPtr& condition)
+        : ASTNode(ASTKind::Loop)
+        , m_condition(condition) {}
+    ASTLoop(std::span<ASTPtr> body)
+        : ASTNode(ASTKind::Loop)
+        , m_condition(std::make_shared<ASTBooleanExpr>(true))
+        , m_body(std::from_range, body) {}
+    ASTLoop(const ASTExprPtr& condition, std::span<ASTPtr> body)
+        : ASTNode(ASTKind::Loop)
+        , m_condition(condition)
+        , m_body(std::from_range, body) {}
+    ~ASTLoop() = default;
+
+    const ASTExprPtr& condition() const noexcept { return m_condition; }
+    const std::vector<ASTPtr> body() const noexcept { return m_body; }
+private:
+    ASTExprPtr m_condition;
+    std::vector<ASTPtr> m_body;
+};
+
+class ASTBreak : public ASTNode {
+public:
+    ASTBreak() : ASTNode(ASTKind::Break) {}
+    ~ASTBreak() = default;
+};
+
+class ASTContinue : public ASTNode {
+public:
+    ASTContinue() : ASTNode(ASTKind::Continue) {}
+    ~ASTContinue() = default;
 };
 
 class ASTPrint : public ASTNode {

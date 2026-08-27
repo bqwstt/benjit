@@ -14,6 +14,8 @@ std::unordered_map<std::string, TokenKind> k_keywords {
     {"false", TokenKind::False},
     {"for", TokenKind::For},
     {"do", TokenKind::Do},
+    {"break", TokenKind::Break},
+    {"continue", TokenKind::Continue},
     {"return", TokenKind::Return},
     {"variable", TokenKind::Variable},
     {"algorithm", TokenKind::Algorithm},

@@ -54,6 +54,20 @@ Parser::parse_statement()
             stmt = parse_print();
             break;
         }
+        case TokenKind::For: {
+            stmt = parse_for_loop();
+            break;
+        }
+        case TokenKind::Break: {
+            stmt = std::make_shared<ASTBreak>();
+            consume_token();
+            break;
+        }
+        case TokenKind::Continue: {
+            stmt = std::make_shared<ASTContinue>();
+            consume_token();
+            break;
+        }
         case TokenKind::Identifier: {
             if (m_next_token.kind() == TokenKind::OpenParenthesis) {
                 stmt = parse_function_call();
@@ -142,11 +156,7 @@ Parser::parse_function_declaration()
     consume_token(); // Consume 'is' keyword
 
     std::vector<ASTPtr> body;
-    auto is_end_of_function = [&](const TokenKind kind) {
-        return kind == TokenKind::Return || kind == TokenKind::End;
-    };
-
-    while (!is_at_end() && !is_end_of_function(m_current_token.kind())) {
+    while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
         auto stmt = parse_statement();
         body.push_back(std::move(stmt));
     }
@@ -172,6 +182,24 @@ Parser::parse_function_call()
     consume_token(); // Consume close paren
 
     return std::make_shared<ASTFunctionCall>(func_name);
+}
+
+std::shared_ptr<ASTLoop>
+Parser::parse_for_loop()
+{
+    consume_token(); // Consume 'for' keyword
+    auto condition = parse_expression();
+    consume_token(); // Consume 'do' keyword
+
+    std::vector<ASTPtr> body;
+    while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
+        auto stmt = parse_statement();
+        body.push_back(std::move(stmt));
+    }
+
+    consume_token(); // Consume 'end' keyword
+
+    return std::make_shared<ASTLoop>(condition, body);
 }
 
 std::shared_ptr<ASTPrint>

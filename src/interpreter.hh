@@ -101,6 +101,7 @@ private:
     void interpret_variable_assignment(const std::shared_ptr<ASTVariableAssignment>& assignment);
     void interpret_function_declaration(const std::shared_ptr<ASTFunctionDeclaration>& func_decl);
     void interpret_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
+    void interpret_loop(const std::shared_ptr<ASTLoop>& loop);
     void interpret_print(const std::shared_ptr<ASTPrint>& print);
 
     [[nodiscard]] Value evaluate_expression(const ASTExprPtr& expr);

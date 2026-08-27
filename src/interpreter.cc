@@ -2,6 +2,7 @@
 #include "ast.hh"
 
 #include <cmath>
+#include <print>
 #include <string>
 
 Function::Function(const FunctionDecl& decl)
@@ -31,6 +32,8 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
         interpret_function_declaration(func_decl);
     } else if (const auto& func_call = dynamic_pointer_cast<ASTFunctionCall>(stmt)) {
         interpret_function_call(func_call);
+    } else if (const auto& loop = dynamic_pointer_cast<ASTLoop>(stmt)) {
+        interpret_loop(loop);
     } else if (const auto& print = dynamic_pointer_cast<ASTPrint>(stmt)) {
         interpret_print(print);
     }
@@ -55,6 +58,27 @@ Interpreter::interpret_function_call(const std::shared_ptr<ASTFunctionCall>& fun
 {
     // Evaluates the function ignoring the return value
     std::ignore = evaluate_function_call(func_call);
+}
+
+void
+Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
+{
+    ScopeGuard guard(m_environment);
+
+    bool can_iterate = std::get<bool>(evaluate_expression(loop->condition()));
+    while (can_iterate) {
+        for (const auto& node : loop->body()) {
+            if (node->kind() == ASTKind::Break) {
+                can_iterate = false;
+                break;
+            }
+
+            if (node->kind() == ASTKind::Continue)
+                break; // Breaks the statement loops, go back to the beginning of the iteration.
+
+            interpret_statement(node);
+        }
+    }
 }
 
 void
