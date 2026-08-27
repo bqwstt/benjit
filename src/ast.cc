@@ -8,6 +8,7 @@ ASTNode::to_string() const
     switch (m_kind) {
         case ASTKind::Unknown: return "Unknown";
         case ASTKind::NumericExpr: return "NumericExpr";
+        case ASTKind::BooleanExpr: return "BooleanExpr";
         case ASTKind::BinaryExpr: return "BinaryExpr";
         case ASTKind::Identifier: return "Identifier";
         case ASTKind::FunctionDeclaration: return "FunctionDeclaration";
@@ -73,6 +74,7 @@ void dump_node(ASTPtr node, uint8_t depth, bool has_child)
             break;
         }
         default:
+            // @TODO: Dump remaining nodes
             break;
     }
 }

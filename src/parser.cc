@@ -87,6 +87,11 @@ Parser::parse_expression(uint8_t precedence_limit)
             expr = std::make_shared<ASTIdentifier>(m_current_token.literal());
             consume_token(); // Consume the identifier
         }
+    } else if (m_current_token.kind() == TokenKind::True || m_current_token.kind() == TokenKind::False) {
+        // We don't want to do binary ops for booleans, so we return the expression directly.
+        bool is_true_keyword = m_current_token.kind() == TokenKind::True;
+        consume_token(); // Consume the boolean
+        return std::make_shared<ASTBooleanExpr>(is_true_keyword);
     }
 
     while (m_current_token.is_operator()) {

@@ -11,6 +11,7 @@
 enum class ASTKind {
     Unknown,
     NumericExpr,
+    BooleanExpr,
     BinaryExpr,
     Identifier,
     Keyword,
@@ -69,6 +70,18 @@ public:
     const std::string& literal() const noexcept { return m_literal; }
 private:
     std::string m_literal;
+};
+
+class ASTBooleanExpr : public ASTExpression {
+public:
+    explicit ASTBooleanExpr(bool cond)
+        : ASTExpression(ASTKind::BooleanExpr)
+        , m_value(cond) {}
+
+    const char* literal() const noexcept { return m_value ? "true" : "false"; }
+    bool value() const noexcept { return m_value; }
+private:
+    bool m_value;
 };
 
 class ASTBinaryOp : public ASTExpression {

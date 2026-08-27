@@ -2,10 +2,11 @@
 
 #include "ast.hh"
 
+#include <variant>
 #include <unordered_map>
 
 /// For now, all values are numbers, but it may be possible to add Strings or Bools too.
-using Value = double;
+using Value = std::variant<double, bool>;
 using FunctionDecl = std::shared_ptr<ASTFunctionDeclaration>;
 
 enum class ScopeKind {
@@ -102,8 +103,8 @@ private:
     void interpret_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
     void interpret_print(const std::shared_ptr<ASTPrint>& print);
 
-    [[nodiscard]] double evaluate_expression(const ASTExprPtr& expr);
-    [[nodiscard]] double evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
+    [[nodiscard]] Value evaluate_expression(const ASTExprPtr& expr);
+    [[nodiscard]] Value evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
     [[nodiscard]] double evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop);
 
     Environment m_environment;

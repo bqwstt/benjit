@@ -40,7 +40,7 @@ void
 Interpreter::interpret_variable_assignment(const std::shared_ptr<ASTVariableAssignment>& assignment)
 {
     std::string var_name = assignment->identifier().name();
-    double result = evaluate_expression(assignment->expression());
+    Value result = evaluate_expression(assignment->expression());
     m_environment.current_scope().tie_variable(var_name, result);
 }
 
@@ -61,11 +61,13 @@ void
 Interpreter::interpret_print(const std::shared_ptr<ASTPrint>& print)
 {
     ASTIdentifier param = print->param();
-    double value = m_environment.current_scope().get_variable_value(param.name());
-    print->print(value);
+    Value value = m_environment.current_scope().get_variable_value(param.name());
+    std::visit([&print](auto&& value) {
+        print->print(value);
+    }, value);
 }
 
-double
+Value
 Interpreter::evaluate_expression(const ASTExprPtr& expr)
 {
     if (const auto& identifier = dynamic_pointer_cast<ASTIdentifier>(expr)) {
@@ -76,6 +78,10 @@ Interpreter::evaluate_expression(const ASTExprPtr& expr)
         return std::stod(numeric->literal());
     }
 
+    if (const auto& boolean = dynamic_pointer_cast<ASTBooleanExpr>(expr)) {
+        return boolean->value();
+    }
+
     if (const auto& func_call = dynamic_pointer_cast<ASTFunctionCall>(expr)) {
         return evaluate_function_call(func_call);
     }
@@ -84,10 +90,11 @@ Interpreter::evaluate_expression(const ASTExprPtr& expr)
         return evaluate_binop(binop);
     }
 
+    // @TODO: Replace NAN with std::monostate, maybe?
     return NAN;
 }
 
-double
+Value
 Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func_call)
 {
     ScopeGuard guard(m_environment);
@@ -107,8 +114,8 @@ Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func
 double
 Interpreter::evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop)
 {
-    double left = evaluate_expression(binop->left()) ;
-    double right = evaluate_expression(binop->right()) ;
+    double left = std::get<double>(evaluate_expression(binop->left()));
+    double right = std::get<double>(evaluate_expression(binop->right()));
     TokenKind op = binop->op().kind();
 
     switch (op) {
