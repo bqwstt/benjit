@@ -63,7 +63,7 @@ Interpreter::interpret_function_call(const std::shared_ptr<ASTFunctionCall>& fun
 void
 Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
 {
-    ScopeGuard guard(m_environment);
+    VariableScopeGuard guard(m_environment);
 
     bool can_iterate = std::get<bool>(evaluate_expression(loop->condition()));
     while (can_iterate) {
@@ -78,6 +78,8 @@ Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
 
             interpret_statement(node);
         }
+
+        can_iterate = std::get<bool>(evaluate_expression(loop->condition()));
     }
 }
 
@@ -121,7 +123,8 @@ Interpreter::evaluate_expression(const ASTExprPtr& expr)
 Value
 Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func_call)
 {
-    ScopeGuard guard(m_environment);
+    VariableScopeGuard guard(m_environment);
+
     auto func = m_environment.get_function(func_call->func_name().name());
 
     for (const auto& s : func.func_body()) {

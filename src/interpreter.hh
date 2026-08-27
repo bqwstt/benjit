@@ -23,10 +23,13 @@ public:
     Scope(const Scope& other) = default;
     ~Scope() = default;
 
+    // @FIXME: If the variable does not exist, we should print an error. Separate this function into two.
     void tie_variable(const std::string& var, Value value) { m_variables.insert_or_assign(var, std::move(value)); };
     Value get_variable_value(const std::string& var) { return m_variables[var]; };
 
     void set_kind(ScopeKind kind) { m_kind = kind; }
+
+    friend class VariableScopeGuard;
 private:
     ScopeKind m_kind = ScopeKind::Global;
     std::unordered_map<std::string, Value> m_variables;
@@ -71,17 +74,42 @@ private:
     Scope m_current_scope;
 };
 
-class ScopeGuard {
+/// Guard that pushes and pops variable state from a function.
+/// Whenever we start interpreting a new code block, we copy the current state of the variables
+/// into a new scope and modify its contents. Once we're done (i.e. we exit the block), we restore
+/// the state to the previous one.
+class VariableScopeGuard {
 public:
-    ScopeGuard(Environment& env)
+    VariableScopeGuard(Environment& env)
         : m_environment(env), m_old_scope(env.current_scope())
     {
         // Copy the scope (a.k.a. symbol table) to a new scope
         m_environment.current_scope() = Scope(m_environment.current_scope());
     }
 
-    ~ScopeGuard()
+    ~VariableScopeGuard()
     {
+        // Update any variable already existing in the old scope with its new value.
+        // Anything in the new scope that is not in the old scope is discarded.
+        // For example:
+        //
+        // Scope A (old)   Scope B (new)
+        // var a = 5       var a = 5 (same)
+        // var b = 6       var b = 8 (updated)
+        //                 var c = 2 (new)
+        //
+        // Resulting scope will be scope A with updated values:
+        //
+        // Scope A
+        // var a = 5
+        // var b = 8
+        Scope new_scope = m_environment.current_scope();
+        for (auto& [var, value] : m_old_scope.m_variables) {
+            if (auto it = new_scope.m_variables.find(var); it != new_scope.m_variables.end()) {
+                value = it->second;
+            }
+        }
+
         // Restore scope back to original
         m_environment.current_scope() = m_old_scope;
     }
