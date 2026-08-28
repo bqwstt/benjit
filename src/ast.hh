@@ -228,13 +228,14 @@ private:
 
 class ASTContinue : public ASTNode {
 public:
-    ASTContinue() : ASTNode(ASTKind::Continue) {}
+    ASTContinue(ASTLoop& loop)
+        : ASTNode(ASTKind::Continue)
+        , m_tied_to(loop) {}
     ~ASTContinue() = default;
 
-    void set_parent(const std::shared_ptr<ASTLoop>& parent) { m_tied_to = parent; }
-    std::shared_ptr<ASTLoop> parent() { return m_tied_to; }
+    ASTLoop& parent() { return m_tied_to; }
 private:
-    std::shared_ptr<ASTLoop> m_tied_to;
+    ASTLoop& m_tied_to;
 };
 
 class ASTReturn : public ASTNode {

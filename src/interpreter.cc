@@ -27,32 +27,32 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
 {
     if (const auto& variable_assignment = dynamic_pointer_cast<ASTVariableAssignment>(stmt)) {
         interpret_variable_assignment(variable_assignment);
-    } 
-    
+    }
+
     if (const auto& func_decl = dynamic_pointer_cast<ASTFunctionDeclaration>(stmt)) {
         interpret_function_declaration(func_decl);
-    } 
-    
+    }
+
     if (const auto& func_call = dynamic_pointer_cast<ASTFunctionCall>(stmt)) {
         interpret_function_call(func_call);
-    } 
-    
+    }
+
     if (const auto& break_stmt = dynamic_pointer_cast<ASTBreak>(stmt)) {
         break_stmt->parent().set_can_iterate(false);
-    } 
-    
+    }
+
     if (const auto& continue_stmt = dynamic_pointer_cast<ASTContinue>(stmt)) {
-        continue_stmt->parent()->set_need_skip(true);
-    } 
-    
+        continue_stmt->parent().set_need_skip(true);
+    }
+
     if (const auto& loop = dynamic_pointer_cast<ASTLoop>(stmt)) {
         interpret_loop(loop);
-    } 
-    
+    }
+
     if (const auto& if_stmt = dynamic_pointer_cast<ASTIf>(stmt)) {
         interpret_if(if_stmt);
-    } 
-    
+    }
+
     if (const auto& print = dynamic_pointer_cast<ASTPrint>(stmt)) {
         interpret_print(print);
     }
@@ -86,15 +86,16 @@ Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
 
     bool condition_holds = std::get<bool>(evaluate_expression(loop->condition()));
     while (condition_holds && loop->can_iterate()) {
+        loop->set_need_skip(false); // Reset skip flag if found a `continue` in previous iteration
+
         for (const auto& node : loop->body()) {
-            if (!loop->can_iterate() || loop->need_skip()) {
+            interpret_statement(node);
+
+            if (!loop->can_iterate() || loop->need_skip())
                 // Hit `break` or `continue`
                 // If `break`, then stop looping.
                 // If `continue`, break the inner loop and continue execution.
                 break;
-            }
-
-            interpret_statement(node);
         }
 
         condition_holds = std::get<bool>(evaluate_expression(loop->condition()));

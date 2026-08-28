@@ -71,9 +71,7 @@ Parser::parse_statement(ScopeContext& ctx)
             break;
         }
         case TokenKind::Continue: {
-            auto continue_stmt = std::make_shared<ASTContinue>();
-            continue_stmt->set_parent(ctx.current_loop);
-            stmt = continue_stmt;
+            stmt = std::make_shared<ASTContinue>(*ctx.current_loop);
             consume_token();
             break;
         }
