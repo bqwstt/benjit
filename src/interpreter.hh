@@ -144,7 +144,6 @@ private:
     void interpret_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
     void interpret_loop(const std::shared_ptr<ASTLoop>& loop);
     void interpret_if(const std::shared_ptr<ASTIf>& if_stmt);
-    void interpret_return(const std::shared_ptr<ASTReturn>& ret);
     void interpret_print(const std::shared_ptr<ASTPrint>& print);
 
     [[nodiscard]] Value evaluate_expression(const ASTExprPtr& expr);
@@ -152,4 +151,5 @@ private:
     [[nodiscard]] Value evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop);
 
     Environment m_environment;
+    bool m_stop_requested = false;
 };

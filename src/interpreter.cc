@@ -2,6 +2,7 @@
 #include "ast.hh"
 
 #include <cmath>
+#include <cstdio>
 #include <string>
 
 Function::Function(const FunctionDecl& decl)
@@ -38,6 +39,7 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
     }
 
     if (const auto& break_stmt = dynamic_pointer_cast<ASTBreak>(stmt)) {
+        m_stop_requested = true;
         break_stmt->parent().set_can_iterate(false);
     }
 
@@ -46,6 +48,7 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
     }
 
     if (const auto& return_stmt = dynamic_pointer_cast<ASTReturn>(stmt)) {
+        m_stop_requested = true;
         return_stmt->parent().set_ret_expr(return_stmt->ret_expr());
     }
 
@@ -89,17 +92,18 @@ Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
     BlockVariableScopeGuard guard(m_environment);
 
     bool condition_holds = std::get<bool>(evaluate_expression(loop->condition()));
-    while (condition_holds && loop->can_iterate()) {
+    while (condition_holds && !m_stop_requested) {
         loop->set_need_skip(false); // Reset skip flag if found a `continue` in previous iteration
 
         for (const auto& node : loop->body()) {
             interpret_statement(node);
 
-            if (!loop->can_iterate() || loop->need_skip())
+            if (m_stop_requested || loop->need_skip()) {
                 // Hit `break` or `continue`
                 // If `break`, then stop looping.
                 // If `continue`, break the inner loop and continue execution.
                 break;
+            }
         }
 
         condition_holds = std::get<bool>(evaluate_expression(loop->condition()));
@@ -114,15 +118,15 @@ Interpreter::interpret_if(const std::shared_ptr<ASTIf>& if_stmt)
     bool cond_holds_true = std::get<bool>(evaluate_expression(if_stmt->condition()));
     const auto& body_to_run = cond_holds_true ? if_stmt->body() : if_stmt->else_body();
     for (const auto& node : body_to_run) {
+        if (m_stop_requested) {
+            break;
+        }
+
         interpret_statement(node);
     }
-}
 
-// void
-// Interpreter::interpret_return(const std::shared_ptr<ASTReturn>& ret)
-// {
-//     return evaluate_expression(ret->ret_expr());
-// }
+    m_stop_requested = false;
+}
 
 void
 Interpreter::interpret_print(const std::shared_ptr<ASTPrint>& print)
@@ -166,14 +170,16 @@ Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func
 {
     FunctionVariableScopeGuard guard(m_environment);
 
-    auto func = m_environment.get_function(func_call->func_name().name());
-
+    auto& func = m_environment.get_function(func_call->func_name().name());
     for (const auto& s : func.func_body()) {
         interpret_statement(s);
-    }
 
-    if (auto expr = func.return_expr(); expr)
-        return evaluate_expression(expr);
+        if (auto expr = func.return_expr(); expr) {
+            // Restore flag set by return
+            m_stop_requested = false;
+            return evaluate_expression(expr);
+        }
+    }
 
     return NAN;
 }

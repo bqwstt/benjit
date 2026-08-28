@@ -193,6 +193,7 @@ Parser::parse_function_declaration(ScopeContext& ctx)
         body.push_back(std::move(stmt));
     }
 
+    // Revert func
     ctx.current_function = old_func;
 
     consume_token(); // Consume 'end' keyword
@@ -275,7 +276,7 @@ Parser::parse_if(ScopeContext& ctx)
 }
 
 std::shared_ptr<ASTReturn>
-Parser::parse_return(ScopeContext& ctx)
+Parser::parse_return(const ScopeContext& ctx)
 {
     consume_token(); // Consume 'return' keyword
     auto expr = parse_expression();
