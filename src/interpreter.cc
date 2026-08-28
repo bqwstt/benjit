@@ -118,14 +118,12 @@ Interpreter::interpret_if(const std::shared_ptr<ASTIf>& if_stmt)
     bool cond_holds_true = std::get<bool>(evaluate_expression(if_stmt->condition()));
     const auto& body_to_run = cond_holds_true ? if_stmt->body() : if_stmt->else_body();
     for (const auto& node : body_to_run) {
+        interpret_statement(node);
+
         if (m_stop_requested) {
             break;
         }
-
-        interpret_statement(node);
     }
-
-    m_stop_requested = false;
 }
 
 void
