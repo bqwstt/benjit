@@ -44,7 +44,7 @@ private:
     [[nodiscard]] std::shared_ptr<ASTFunctionCall> parse_function_call();
     [[nodiscard]] std::shared_ptr<ASTLoop> parse_loop(ScopeContext& ctx);
     [[nodiscard]] std::shared_ptr<ASTIf> parse_if(ScopeContext& ctx);
-    [[nodiscard]] std::shared_ptr<ASTReturn> parse_return();
+    [[nodiscard]] std::shared_ptr<ASTReturn> parse_return(ScopeContext& ctx);
     [[nodiscard]] std::shared_ptr<ASTPrint> parse_print();
 };
 

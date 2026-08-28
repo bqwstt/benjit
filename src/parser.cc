@@ -76,10 +76,7 @@ Parser::parse_statement(ScopeContext& ctx)
             break;
         }
         case TokenKind::Return: {
-            auto return_stmt = std::make_shared<ASTReturn>();
-            stmt = return_stmt;
-            consume_token();
-            // stmt = parse_return();
+            stmt = parse_return(ctx);
             break;
         }
         case TokenKind::Identifier: {
@@ -184,26 +181,24 @@ Parser::parse_function_declaration(ScopeContext& ctx)
     consume_token(); // Consume close paren
     consume_token(); // Consume 'is' keyword
 
-    std::vector<ASTPtr> body;
-    ASTExprPtr return_expr;
-    while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
-        if (m_current_token.kind() == TokenKind::Return) {
-            // Stop parsing after return.
-            // @FIXME: This may not be what we want.
-            // @FIXME: If we have multiple returns, for example in ifs, this breaks.
-            consume_token(); // Consume 'return' keyword
-            return_expr = parse_expression();
-            break;
-        }
+    auto func_decl = std::make_shared<ASTFunctionDeclaration>(func_name);
+    auto old_func = ctx.current_function;
 
+    // Set context's func to this new one
+    ctx.current_function = func_decl;
+
+    std::vector<ASTPtr> body;
+    while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
         auto stmt = parse_statement(ctx);
         body.push_back(std::move(stmt));
     }
 
+    ctx.current_function = old_func;
+
     consume_token(); // Consume 'end' keyword
 
-    // @TODO: Anything other than variables!
-    return std::make_shared<ASTFunctionDeclaration>(func_name, body);
+    func_decl->set_body(body);
+    return func_decl;
 }
 
 std::shared_ptr<ASTFunctionCall>
@@ -280,11 +275,11 @@ Parser::parse_if(ScopeContext& ctx)
 }
 
 std::shared_ptr<ASTReturn>
-Parser::parse_return()
+Parser::parse_return(ScopeContext& ctx)
 {
     consume_token(); // Consume 'return' keyword
     auto expr = parse_expression();
-    return std::make_shared<ASTReturn>(expr);
+    return std::make_shared<ASTReturn>(expr, *ctx.current_function);
 }
 
 std::shared_ptr<ASTPrint>

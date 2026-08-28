@@ -142,6 +142,9 @@ private:
 // @TODO: Move ctors to .cc file?
 class ASTFunctionDeclaration : public ASTNode {
 public:
+    ASTFunctionDeclaration(const ASTIdentifier& name)
+        : ASTNode(ASTKind::FunctionDeclaration)
+        , m_func_name(name) {}
     ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTPtr> body)
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name)
@@ -154,11 +157,17 @@ public:
     ~ASTFunctionDeclaration() = default;
 
     const ASTIdentifier& func_name() const noexcept { return m_func_name; }
+
     const std::vector<ASTPtr>& body() const noexcept { return m_body; }
+    void set_body(const std::vector<ASTPtr>& body) { m_body = body; }
+
+    void set_ret_expr(ASTExprPtr expr) { m_ret_expr = expr; }
+    ASTExprPtr ret_expr() const noexcept { return m_ret_expr; }
 private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;
     std::vector<ASTPtr> m_body;
+    ASTExprPtr m_ret_expr;
 };
 
 class ASTFunctionCall : public ASTExpression {
@@ -240,21 +249,17 @@ private:
 
 class ASTReturn : public ASTNode {
 public:
-    ASTReturn() : ASTNode(ASTKind::Return) {}
-    ASTReturn(const ASTExprPtr& expr)
-        : ASTNode(ASTKind::Return)
-        , m_expr(expr) {}
-    ASTReturn(const ASTExprPtr& expr, const ASTPtr& parent)
+    ASTReturn(const ASTExprPtr& expr, ASTFunctionDeclaration& parent)
         : ASTNode(ASTKind::Return)
         , m_expr(expr)
         , m_tied_to(parent) {}
     ~ASTReturn() = default;
 
     const ASTExprPtr& ret_expr() const noexcept { return m_expr; }
-    const ASTPtr& parent() const noexcept { return m_tied_to; }
+    ASTFunctionDeclaration& parent() const noexcept { return m_tied_to; }
 private:
     ASTExprPtr m_expr;
-    ASTPtr m_tied_to;
+    ASTFunctionDeclaration& m_tied_to;
 };
 
 class ASTIf : public ASTConditional {

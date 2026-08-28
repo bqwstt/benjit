@@ -45,6 +45,10 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
         continue_stmt->parent().set_need_skip(true);
     }
 
+    if (const auto& return_stmt = dynamic_pointer_cast<ASTReturn>(stmt)) {
+        return_stmt->parent().set_ret_expr(return_stmt->ret_expr());
+    }
+
     if (const auto& loop = dynamic_pointer_cast<ASTLoop>(stmt)) {
         interpret_loop(loop);
     }
@@ -165,13 +169,11 @@ Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func
     auto func = m_environment.get_function(func_call->func_name().name());
 
     for (const auto& s : func.func_body()) {
-        if (s->kind() == ASTKind::Return) {
-            auto ret = dynamic_pointer_cast<ASTReturn>(s);
-            return evaluate_expression(ret->ret_expr());
-        }
-
         interpret_statement(s);
     }
+
+    if (auto expr = func.return_expr(); expr)
+        return evaluate_expression(expr);
 
     return NAN;
 }

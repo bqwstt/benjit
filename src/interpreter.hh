@@ -45,7 +45,7 @@ public:
 
     std::string func_name() const { return m_decl->func_name().name(); }
     std::vector<ASTPtr> func_body() const { return m_decl->body(); }
-    // ASTExprPtr return_expr() const { return m_decl->return_expr(); }
+    ASTExprPtr return_expr() const { return m_decl->ret_expr(); }
 
     Scope& scope() noexcept { return m_scope; }
 private:
