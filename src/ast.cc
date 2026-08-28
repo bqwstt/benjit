@@ -13,6 +13,7 @@ ASTNode::to_string() const
         case ASTKind::Identifier: return "Identifier";
         case ASTKind::FunctionDeclaration: return "FunctionDeclaration";
         case ASTKind::FunctionCall: return "FunctionCall";
+        case ASTKind::Return: return "Return";
         case ASTKind::Loop: return "Loop";
         case ASTKind::Break: return "Break";
         case ASTKind::Continue: return "Continue";

@@ -18,6 +18,7 @@ enum class ASTKind {
     VariableAssignment,
     FunctionDeclaration,
     FunctionCall,
+    Return,
     Loop,
     Break,
     Continue,
@@ -145,11 +146,6 @@ public:
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name)
         , m_body(std::from_range, body) {}
-    ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTPtr> body, const ASTExprPtr& return_expr)
-        : ASTNode(ASTKind::FunctionDeclaration)
-        , m_func_name(name)
-        , m_body(std::from_range, body)
-        , m_return_expr(return_expr) {}
     ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTIdentifier> parameters, std::span<ASTPtr> body)
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name)
@@ -159,12 +155,10 @@ public:
 
     const ASTIdentifier& func_name() const noexcept { return m_func_name; }
     const std::vector<ASTPtr>& body() const noexcept { return m_body; }
-    const ASTExprPtr& return_expr() const noexcept { return m_return_expr; }
 private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;
     std::vector<ASTPtr> m_body;
-    ASTExprPtr m_return_expr;
 };
 
 class ASTFunctionCall : public ASTExpression {
@@ -186,12 +180,15 @@ private:
 
 class ASTConditional : public ASTNode {
 public:
-    ASTConditional() = delete;
+    ASTConditional(ASTKind kind) : ASTNode(kind) {}
     ASTConditional(ASTKind kind, const ASTExprPtr& condition, std::span<ASTPtr> body)
         : ASTNode(kind)
         , m_condition(condition)
         , m_body(std::from_range, body) {}
     ~ASTConditional() = default;
+
+    void set_condition(ASTExprPtr condition) { m_condition = condition; }
+    void set_body(const std::vector<ASTPtr>& body) { m_body = body; }
 
     const ASTExprPtr& condition() const noexcept { return m_condition; }
     const std::vector<ASTPtr> body() const noexcept { return m_body; }
@@ -202,22 +199,61 @@ private:
 
 class ASTLoop : public ASTConditional {
 public:
-    ASTLoop() = delete;
+    ASTLoop() : ASTConditional(ASTKind::Loop) {}
     ASTLoop(const ASTExprPtr& condition, std::span<ASTPtr> body)
         : ASTConditional(ASTKind::Loop, condition, body) {}
     ~ASTLoop() = default;
+
+    bool can_iterate() const noexcept { return m_can_iterate; }
+    void set_can_iterate(bool value) { m_can_iterate = value; }
+
+    bool need_skip() const noexcept { return m_need_skip; }
+    void set_need_skip(bool value) { m_need_skip = value; }
+private:
+    bool m_can_iterate = true;
+    bool m_need_skip = false;
 };
 
 class ASTBreak : public ASTNode {
 public:
-    ASTBreak() : ASTNode(ASTKind::Break) {}
+    ASTBreak(ASTLoop& loop)
+        : ASTNode(ASTKind::Break)
+        , m_tied_to(loop) {}
     ~ASTBreak() = default;
+
+    ASTLoop& parent() { return m_tied_to; }
+private:
+    ASTLoop& m_tied_to;
 };
 
 class ASTContinue : public ASTNode {
 public:
     ASTContinue() : ASTNode(ASTKind::Continue) {}
     ~ASTContinue() = default;
+
+    void set_parent(const std::shared_ptr<ASTLoop>& parent) { m_tied_to = parent; }
+    std::shared_ptr<ASTLoop> parent() { return m_tied_to; }
+private:
+    std::shared_ptr<ASTLoop> m_tied_to;
+};
+
+class ASTReturn : public ASTNode {
+public:
+    ASTReturn() : ASTNode(ASTKind::Return) {}
+    ASTReturn(const ASTExprPtr& expr)
+        : ASTNode(ASTKind::Return)
+        , m_expr(expr) {}
+    ASTReturn(const ASTExprPtr& expr, const ASTPtr& parent)
+        : ASTNode(ASTKind::Return)
+        , m_expr(expr)
+        , m_tied_to(parent) {}
+    ~ASTReturn() = default;
+
+    const ASTExprPtr& ret_expr() const noexcept { return m_expr; }
+    const ASTPtr& parent() const noexcept { return m_tied_to; }
+private:
+    ASTExprPtr m_expr;
+    ASTPtr m_tied_to;
 };
 
 class ASTIf : public ASTConditional {

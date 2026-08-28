@@ -2,6 +2,7 @@
 #include "ast.hh"
 #include "reporter.hh"
 #include "token.hh"
+#include <cstdio>
 #include <memory>
 #include <print>
 
@@ -20,8 +21,9 @@ ASTProgram
 Parser::parse()
 {
     ASTProgram program;
+    ScopeContext ctx;
     while (!is_at_end() && !m_had_error) {
-        ASTPtr stmt = parse_statement();
+        ASTPtr stmt = parse_statement(ctx);
         if (stmt != nullptr) {
             program.add_statement(stmt);
         }
@@ -34,7 +36,7 @@ Parser::parse()
 }
 
 std::shared_ptr<ASTNode>
-Parser::parse_statement()
+Parser::parse_statement(ScopeContext& ctx)
 {
     ASTPtr stmt;
     switch (m_current_token.kind()) {
@@ -48,7 +50,7 @@ Parser::parse_statement()
             break;
         }
         case TokenKind::Algorithm: {
-            stmt = parse_function_declaration();
+            stmt = parse_function_declaration(ctx);
             break;
         }
         case TokenKind::Print: {
@@ -56,21 +58,30 @@ Parser::parse_statement()
             break;
         }
         case TokenKind::If: {
-            stmt = parse_if();
+            stmt = parse_if(ctx);
             break;
         }
         case TokenKind::For: {
-            stmt = parse_loop();
+            stmt = parse_loop(ctx);
             break;
         }
         case TokenKind::Break: {
-            stmt = std::make_shared<ASTBreak>();
+            stmt = std::make_shared<ASTBreak>(*ctx.current_loop);
             consume_token();
             break;
         }
         case TokenKind::Continue: {
-            stmt = std::make_shared<ASTContinue>();
+            auto continue_stmt = std::make_shared<ASTContinue>();
+            continue_stmt->set_parent(ctx.current_loop);
+            stmt = continue_stmt;
             consume_token();
+            break;
+        }
+        case TokenKind::Return: {
+            auto return_stmt = std::make_shared<ASTReturn>();
+            stmt = return_stmt;
+            consume_token();
+            // stmt = parse_return();
             break;
         }
         case TokenKind::Identifier: {
@@ -164,7 +175,7 @@ Parser::parse_assignment()
 }
 
 std::shared_ptr<ASTFunctionDeclaration>
-Parser::parse_function_declaration()
+Parser::parse_function_declaration(ScopeContext& ctx)
 {
     consume_token(); // Consume 'algorithm' keyword
     ASTIdentifier func_name(m_current_token.literal());
@@ -187,14 +198,14 @@ Parser::parse_function_declaration()
             break;
         }
 
-        auto stmt = parse_statement();
+        auto stmt = parse_statement(ctx);
         body.push_back(std::move(stmt));
     }
 
     consume_token(); // Consume 'end' keyword
 
     // @TODO: Anything other than variables!
-    return std::make_shared<ASTFunctionDeclaration>(func_name, body, return_expr);
+    return std::make_shared<ASTFunctionDeclaration>(func_name, body);
 }
 
 std::shared_ptr<ASTFunctionCall>
@@ -209,25 +220,36 @@ Parser::parse_function_call()
 }
 
 std::shared_ptr<ASTLoop>
-Parser::parse_loop()
+Parser::parse_loop(ScopeContext& ctx)
 {
     consume_token(); // Consume 'for' keyword
     auto condition = parse_expression();
     consume_token(); // Consume 'do' keyword
 
+    auto loop = std::make_shared<ASTLoop>();
+    auto old_loop = ctx.current_loop;
+
+    // Set context's loop to this new one
+    ctx.current_loop = loop;
+
     std::vector<ASTPtr> body;
     while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
-        auto stmt = parse_statement();
+        auto stmt = parse_statement(ctx);
         body.push_back(std::move(stmt));
     }
 
+    // Revert loop
+    ctx.current_loop = old_loop;
+
     consume_token(); // Consume 'end' keyword
 
-    return std::make_shared<ASTLoop>(condition, body);
+    loop->set_condition(condition);
+    loop->set_body(body);
+    return loop;
 }
 
 std::shared_ptr<ASTIf>
-Parser::parse_if()
+Parser::parse_if(ScopeContext& ctx)
 {
     consume_token(); // Consume 'if' keyword
     auto condition = parse_expression();
@@ -239,7 +261,7 @@ Parser::parse_if()
     };
 
     while (!is_at_end() && !is_end_of_branch(m_current_token.kind())) {
-        auto stmt = parse_statement();
+        auto stmt = parse_statement(ctx);
         body.push_back(std::move(stmt));
     }
 
@@ -249,7 +271,7 @@ Parser::parse_if()
         consume_token(); // Consume 'else' keyword
 
         while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
-            auto stmt = parse_statement();
+            auto stmt = parse_statement(ctx);
             else_body.push_back(std::move(stmt));
         }
     }
@@ -257,6 +279,14 @@ Parser::parse_if()
     consume_token(); // Consume 'end' keyword
 
     return std::make_shared<ASTIf>(condition, body, else_body);
+}
+
+std::shared_ptr<ASTReturn>
+Parser::parse_return()
+{
+    consume_token(); // Consume 'return' keyword
+    auto expr = parse_expression();
+    return std::make_shared<ASTReturn>(expr);
 }
 
 std::shared_ptr<ASTPrint>

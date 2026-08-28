@@ -2,7 +2,6 @@
 #include "ast.hh"
 
 #include <cmath>
-#include <print>
 #include <string>
 
 Function::Function(const FunctionDecl& decl)
@@ -28,15 +27,33 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
 {
     if (const auto& variable_assignment = dynamic_pointer_cast<ASTVariableAssignment>(stmt)) {
         interpret_variable_assignment(variable_assignment);
-    } else if (const auto& func_decl = dynamic_pointer_cast<ASTFunctionDeclaration>(stmt)) {
+    } 
+    
+    if (const auto& func_decl = dynamic_pointer_cast<ASTFunctionDeclaration>(stmt)) {
         interpret_function_declaration(func_decl);
-    } else if (const auto& func_call = dynamic_pointer_cast<ASTFunctionCall>(stmt)) {
+    } 
+    
+    if (const auto& func_call = dynamic_pointer_cast<ASTFunctionCall>(stmt)) {
         interpret_function_call(func_call);
-    } else if (const auto& loop = dynamic_pointer_cast<ASTLoop>(stmt)) {
+    } 
+    
+    if (const auto& break_stmt = dynamic_pointer_cast<ASTBreak>(stmt)) {
+        break_stmt->parent().set_can_iterate(false);
+    } 
+    
+    if (const auto& continue_stmt = dynamic_pointer_cast<ASTContinue>(stmt)) {
+        continue_stmt->parent()->set_need_skip(true);
+    } 
+    
+    if (const auto& loop = dynamic_pointer_cast<ASTLoop>(stmt)) {
         interpret_loop(loop);
-    } else if (const auto& if_stmt = dynamic_pointer_cast<ASTIf>(stmt)) {
+    } 
+    
+    if (const auto& if_stmt = dynamic_pointer_cast<ASTIf>(stmt)) {
         interpret_if(if_stmt);
-    } else if (const auto& print = dynamic_pointer_cast<ASTPrint>(stmt)) {
+    } 
+    
+    if (const auto& print = dynamic_pointer_cast<ASTPrint>(stmt)) {
         interpret_print(print);
     }
 }
@@ -67,21 +84,20 @@ Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
 {
     BlockVariableScopeGuard guard(m_environment);
 
-    bool can_iterate = std::get<bool>(evaluate_expression(loop->condition()));
-    while (can_iterate) {
+    bool condition_holds = std::get<bool>(evaluate_expression(loop->condition()));
+    while (condition_holds && loop->can_iterate()) {
         for (const auto& node : loop->body()) {
-            if (node->kind() == ASTKind::Break) {
-                can_iterate = false;
+            if (!loop->can_iterate() || loop->need_skip()) {
+                // Hit `break` or `continue`
+                // If `break`, then stop looping.
+                // If `continue`, break the inner loop and continue execution.
                 break;
             }
-
-            if (node->kind() == ASTKind::Continue)
-                break; // Breaks the statement loops, go back to the beginning of the iteration.
 
             interpret_statement(node);
         }
 
-        can_iterate = std::get<bool>(evaluate_expression(loop->condition()));
+        condition_holds = std::get<bool>(evaluate_expression(loop->condition()));
     }
 }
 
@@ -96,6 +112,12 @@ Interpreter::interpret_if(const std::shared_ptr<ASTIf>& if_stmt)
         interpret_statement(node);
     }
 }
+
+// void
+// Interpreter::interpret_return(const std::shared_ptr<ASTReturn>& ret)
+// {
+//     return evaluate_expression(ret->ret_expr());
+// }
 
 void
 Interpreter::interpret_print(const std::shared_ptr<ASTPrint>& print)
@@ -142,11 +164,12 @@ Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func
     auto func = m_environment.get_function(func_call->func_name().name());
 
     for (const auto& s : func.func_body()) {
-        interpret_statement(s);
-    }
+        if (s->kind() == ASTKind::Return) {
+            auto ret = dynamic_pointer_cast<ASTReturn>(s);
+            return evaluate_expression(ret->ret_expr());
+        }
 
-    if (auto return_expr = func.return_expr()) {
-        return evaluate_expression(return_expr);
+        interpret_statement(s);
     }
 
     return NAN;

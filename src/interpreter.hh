@@ -45,7 +45,7 @@ public:
 
     std::string func_name() const { return m_decl->func_name().name(); }
     std::vector<ASTPtr> func_body() const { return m_decl->body(); }
-    ASTExprPtr return_expr() const { return m_decl->return_expr(); }
+    // ASTExprPtr return_expr() const { return m_decl->return_expr(); }
 
     Scope& scope() noexcept { return m_scope; }
 private:
@@ -144,6 +144,7 @@ private:
     void interpret_function_call(const std::shared_ptr<ASTFunctionCall>& func_call);
     void interpret_loop(const std::shared_ptr<ASTLoop>& loop);
     void interpret_if(const std::shared_ptr<ASTIf>& if_stmt);
+    void interpret_return(const std::shared_ptr<ASTReturn>& ret);
     void interpret_print(const std::shared_ptr<ASTPrint>& print);
 
     [[nodiscard]] Value evaluate_expression(const ASTExprPtr& expr);

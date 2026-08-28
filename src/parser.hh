@@ -6,6 +6,12 @@
 
 #include <memory>
 
+struct ScopeContext
+{
+    std::shared_ptr<ASTFunctionDeclaration> current_function;
+    std::shared_ptr<ASTLoop> current_loop;
+};
+
 class Parser {
 public:
     explicit Parser(Lexer&& lexer) : m_lexer(std::move(lexer))
@@ -31,13 +37,14 @@ private:
         return m_current_token.kind() == TokenKind::Illegal || m_current_token.kind() == TokenKind::Eof;
     }
 
-    [[nodiscard]] std::shared_ptr<ASTNode> parse_statement();
+    [[nodiscard]] std::shared_ptr<ASTNode> parse_statement(ScopeContext& ctx);
     [[nodiscard]] std::shared_ptr<ASTExpression> parse_expression(uint8_t precedence_limit = 0);
     [[nodiscard]] std::shared_ptr<ASTVariableAssignment> parse_assignment();
-    [[nodiscard]] std::shared_ptr<ASTFunctionDeclaration> parse_function_declaration();
+    [[nodiscard]] std::shared_ptr<ASTFunctionDeclaration> parse_function_declaration(ScopeContext& ctx);
     [[nodiscard]] std::shared_ptr<ASTFunctionCall> parse_function_call();
-    [[nodiscard]] std::shared_ptr<ASTLoop> parse_loop();
-    [[nodiscard]] std::shared_ptr<ASTIf> parse_if();
+    [[nodiscard]] std::shared_ptr<ASTLoop> parse_loop(ScopeContext& ctx);
+    [[nodiscard]] std::shared_ptr<ASTIf> parse_if(ScopeContext& ctx);
+    [[nodiscard]] std::shared_ptr<ASTReturn> parse_return();
     [[nodiscard]] std::shared_ptr<ASTPrint> parse_print();
 };
 
