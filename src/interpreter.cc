@@ -40,7 +40,6 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
 
     if (const auto& break_stmt = dynamic_pointer_cast<ASTBreak>(stmt)) {
         m_stop_requested = true;
-        break_stmt->parent().set_can_iterate(false);
     }
 
     if (const auto& continue_stmt = dynamic_pointer_cast<ASTContinue>(stmt)) {
@@ -108,6 +107,9 @@ Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
 
         condition_holds = std::get<bool>(evaluate_expression(loop->condition()));
     }
+
+    // Reset stop flag made by `break` (if set)
+    m_stop_requested = false;
 }
 
 void

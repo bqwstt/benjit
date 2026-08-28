@@ -213,13 +213,9 @@ public:
         : ASTConditional(ASTKind::Loop, condition, body) {}
     ~ASTLoop() = default;
 
-    bool can_iterate() const noexcept { return m_can_iterate; }
-    void set_can_iterate(bool value) { m_can_iterate = value; }
-
     bool need_skip() const noexcept { return m_need_skip; }
     void set_need_skip(bool value) { m_need_skip = value; }
 private:
-    bool m_can_iterate = true;
     bool m_need_skip = false;
 };
 
