@@ -29,6 +29,7 @@ public:
 
     void set_kind(ScopeKind kind) { m_kind = kind; }
 
+    template <bool>
     friend class VariableScopeGuard;
 private:
     ScopeKind m_kind = ScopeKind::Global;
@@ -78,6 +79,13 @@ private:
 /// Whenever we start interpreting a new code block, we copy the current state of the variables
 /// into a new scope and modify its contents. Once we're done (i.e. we exit the block), we restore
 /// the state to the previous one.
+///
+/// @FIXME: Not really sure if I like the 'Preserving' approach.
+/// Functions will copy the whole scope and NOT update the variables, but restore state back to original.
+/// This is because they create a new stack frame. So if a function gets called inside another function,
+/// it will have its own track of variables and will not pollute other functions.
+/// Blocks, on the other hand, can updates variable freely since they share stack.
+template <bool Preserving>
 class VariableScopeGuard {
 public:
     VariableScopeGuard(Environment& env)
@@ -103,10 +111,12 @@ public:
         // Scope A
         // var a = 5
         // var b = 8
-        Scope new_scope = m_environment.current_scope();
-        for (auto& [var, value] : m_old_scope.m_variables) {
-            if (auto it = new_scope.m_variables.find(var); it != new_scope.m_variables.end()) {
-                value = it->second;
+        if constexpr (Preserving) {
+            Scope new_scope = m_environment.current_scope();
+            for (auto& [var, value] : m_old_scope.m_variables) {
+                if (auto it = new_scope.m_variables.find(var); it != new_scope.m_variables.end()) {
+                    value = it->second;
+                }
             }
         }
 
@@ -117,6 +127,9 @@ private:
     Environment& m_environment;
     Scope m_old_scope;
 };
+
+using FunctionVariableScopeGuard = VariableScopeGuard<false>;
+using BlockVariableScopeGuard = VariableScopeGuard<true>;
 
 class Interpreter {
 public:

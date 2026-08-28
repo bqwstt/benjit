@@ -176,15 +176,19 @@ Parser::parse_function_declaration()
     consume_token(); // Consume 'is' keyword
 
     std::vector<ASTPtr> body;
+    ASTExprPtr return_expr;
     while (!is_at_end() && m_current_token.kind() != TokenKind::End) {
+        if (m_current_token.kind() == TokenKind::Return) {
+            // Stop parsing after return.
+            // @FIXME: This may not be what we want.
+            // @FIXME: If we have multiple returns, for example in ifs, this breaks.
+            consume_token(); // Consume 'return' keyword
+            return_expr = parse_expression();
+            break;
+        }
+
         auto stmt = parse_statement();
         body.push_back(std::move(stmt));
-    }
-
-    ASTExprPtr return_expr;
-    if (m_current_token.kind() == TokenKind::Return) {
-        consume_token(); // Consume 'return' keyword
-        return_expr = parse_expression();
     }
 
     consume_token(); // Consume 'end' keyword
