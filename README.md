@@ -1,5 +1,5 @@
-# BenL: Benji's Language
-BenL is a toy programming language built initially for [Recurse Center](https://www.recurse.com/)'s Impossible Stuff Day (an event where participants are encouraged to try something that feels impossible to do in a day).
+# BenJIT: Benji's JIT-compiled Language
+BenJIT is a toy programming language built initially for [Recurse Center](https://www.recurse.com/)'s Impossible Stuff Day (an event where participants are encouraged to try something that feels impossible to do in a day).
 
 The original idea was to build a JIT compiler in a day. It surely felt impossible but I knew I could get somewhat far. This is the result of it!
 
@@ -40,7 +40,7 @@ print(it_surely_is)
 # 82
 ```
 
-BenL supports:
+BenJIT supports:
 - variables with the `variable` keyword. The only types possible are `double`s and `bool`eans
 - functions with `algorithm ... is`
 - for loops with `for ... do` and `break/continue` statements
@@ -53,4 +53,4 @@ $ make
 $ ./jit <path_to_file>
 ```
 
-BenL is written in C++23, so you need a recent `clang` compiler. LLVM19+ will work. BenL uses `libc++`, so unfortunately GCC is not supported.
+BenJIT is written in C++23, so you need a recent `clang` compiler. LLVM19+ will work. BenJIT uses `libc++`, so unfortunately GCC is not supported.
