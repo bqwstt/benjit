@@ -2,7 +2,6 @@
 #include "ast.hh"
 
 #include <cmath>
-#include <cstdio>
 #include <string>
 
 Function::Function(const FunctionDecl& decl)
