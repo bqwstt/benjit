@@ -130,11 +130,13 @@ Interpreter::interpret_if(const std::shared_ptr<ASTIf>& if_stmt)
 void
 Interpreter::interpret_print(const std::shared_ptr<ASTPrint>& print)
 {
-    ASTIdentifier param = print->param();
-    Value value = m_environment.current_scope().get_variable_value(param.name());
-    std::visit([&print](auto&& value) {
-        print->print(value);
-    }, value);
+    const auto& args = print->args();
+    for (const auto& arg : args) {
+        auto expr = evaluate_expression(arg);
+        std::visit([&print](auto&& value) {
+            print->print(value);
+        }, expr);
+    }
 }
 
 Value

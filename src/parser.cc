@@ -307,13 +307,18 @@ Parser::parse_print()
     consume_token(); // Consume 'print' keyword
     consume_token(); // Consume open paren
 
-    // @FIXME: This print only takes one parameter.
-    ASTIdentifier ident(m_current_token.literal());
-    consume_token(); // Consume param
+    std::vector<ASTExprPtr> arguments;
+    while (!is_at_end() && m_current_token.kind() != TokenKind::CloseParenthesis) {
+        auto expr = parse_expression();
+        arguments.push_back(std::move(expr));
+
+        if (m_current_token.kind() == TokenKind::Comma)
+            consume_token(); // Consume comma
+    }
 
     consume_token(); // Consume close paren
 
-    return std::make_shared<ASTPrint>(ident);
+    return std::make_shared<ASTPrint>(arguments);
 }
 
 void dump_ast(const ASTProgram& program)

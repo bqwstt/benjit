@@ -277,17 +277,17 @@ private:
 
 class ASTPrint : public ASTNode {
 public:
-    ASTPrint(const ASTIdentifier& ident)
+    ASTPrint(const std::vector<ASTExprPtr>& args)
         : ASTNode(ASTKind::Print)
-        , m_param(ident) {}
+        , m_args(args) {}
     ~ASTPrint() = default;
 
-    template <typename T>
-    static void print(T element) { std::print("{}\n", element); };
+    template <typename... Args>
+    static void print(Args&&... element) { std::print("{}\n", std::forward<Args...>(element...)); };
 
-    const ASTIdentifier& param() const noexcept { return m_param; }
+    const std::vector<ASTExprPtr>& args() const noexcept { return m_args; }
 private:
-    ASTIdentifier m_param;
+    std::vector<ASTExprPtr> m_args;
 };
 
 void dump_node(ASTPtr node, uint8_t depth, bool has_child);
