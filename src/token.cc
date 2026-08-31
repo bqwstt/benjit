@@ -16,6 +16,7 @@ Token::to_string() const
         CASE(TokenKind::Minus, "Minus");
         CASE(TokenKind::Multiply, "Multiply");
         CASE(TokenKind::Divide, "Divide");
+        CASE(TokenKind::IntegerDivide, "IntegerDivide");
         CASE(TokenKind::Exponent, "Exponent");
         CASE(TokenKind::Comma, "Comma");
         CASE(TokenKind::OpenParenthesis, "OpenParen");
@@ -76,6 +77,7 @@ Token::operator_precedence() const noexcept
             return 5;
         case TokenKind::Multiply:
         case TokenKind::Divide:
+        case TokenKind::IntegerDivide:
             return 6;
         case TokenKind::Exponent:
             return 7;
@@ -92,6 +94,7 @@ Token::operator_associativity() const noexcept
         case TokenKind::Plus:
         case TokenKind::Multiply:
         case TokenKind::Divide:
+        case TokenKind::IntegerDivide:
         case TokenKind::And:
         case TokenKind::Or:
             return OperatorAssociativity::Left;

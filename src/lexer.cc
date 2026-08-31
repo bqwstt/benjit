@@ -89,7 +89,11 @@ Lexer::translate(const char character) noexcept
         case '+': return Token("+", TokenKind::Plus, pos);
         case '-': return Token("-", TokenKind::Minus, pos);
         case '*': return Token("*", TokenKind::Multiply, pos);
-        case '/': return Token("/", TokenKind::Divide, pos);
+        case '/':
+            if (match('/'))
+                return Token("//", TokenKind::IntegerDivide, pos);
+
+            return Token("/", TokenKind::Divide, pos);
         case '^': return Token("^", TokenKind::Exponent, pos);
         case '|':
             if (match('|'))

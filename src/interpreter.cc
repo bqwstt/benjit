@@ -227,6 +227,8 @@ Interpreter::evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop)
             return std::get<double>(left) * std::get<double>(right);
         case TokenKind::Divide:
             return std::get<double>(left) / std::get<double>(right);
+        case TokenKind::IntegerDivide:
+            return std::trunc(std::get<double>(left) / std::get<double>(right));
         case TokenKind::Exponent:
             return static_cast<double>(std::powl(std::get<double>(left), std::get<double>(right)));
         case TokenKind::LessThan:

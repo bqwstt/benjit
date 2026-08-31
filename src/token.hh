@@ -33,6 +33,7 @@ enum class TokenKind : unsigned short {
     GreaterEquals,  // >=
     LessEquals,     // <=
     Assignment,     // :=
+    IntegerDivide,  // //
 
     // Literals
     Identifier = 48,
