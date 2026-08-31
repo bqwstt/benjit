@@ -7,37 +7,39 @@ The original idea was to build a JIT compiler in a day. It surely felt impossibl
 That's the fun bit! There's none, yet. I now know writing a JIT in a day is truly impossible. But we'll get to it soon. For now, this is what the language looks like:
 
 ```benl
-algorithm my_awesome_func() is
-    variable i := 0
-    for i < 10 do
-        i := i + 1
-        if i > 5 then
-            return i + 1
+algorithm is_prime(n) is
+    if n < 2 then
+        return false
+    end
+
+    variable i := 2
+    for i * i < n + 1 do
+        variable divided := n // i
+        variable remainder := n - divided * i
+        if remainder == 0 then
+            return false
         end
+        i := i + 1
     end
 
-    print(i) # Won't get printed
-    return i
+    return true
 end
 
-algorithm my_other_awesome_func() is
-    variable i := 42
-    if i < 100 then
-        print(i)
-        i := i + 40
+algorithm count_primes(limit) is
+    variable count := 0
+    variable n := 2
+    for n < limit + 1 do
+        if is_prime(n) then
+            count := count + 1
+        end
+        n := n + 1
     end
-    return i
+    return count
 end
 
-variable dude_thats_awesome := my_awesome_func()
-variable it_surely_is := my_other_awesome_func()
-print(dude_thats_awesome)
-print(it_surely_is)
-
+print(count_primes(50))
 # Program prints:
-# 42
-# 7
-# 82
+# 15
 ```
 
 BenJIT supports:
