@@ -119,40 +119,36 @@ Parser::parse_expression(uint8_t precedence_limit)
             expr = std::make_shared<ASTIdentifier>(m_current_token.literal());
             consume_token(); // Consume the identifier
         }
-    }
-
-    if (m_current_token.kind() == TokenKind::True || m_current_token.kind() == TokenKind::False) {
+    } else if (m_current_token.kind() == TokenKind::True || m_current_token.kind() == TokenKind::False) {
         bool is_true_keyword = m_current_token.kind() == TokenKind::True;
         consume_token(); // Consume the boolean
         expr = std::make_shared<ASTBooleanExpr>(is_true_keyword);
     }
 
-    if (m_current_token.is_logical_operator()) {
-        Token op_token = m_current_token;
-        consume_token(); // Consume the operator
-
-        auto right = parse_expression();
-        return std::make_shared<ASTBinaryOp>(op_token, expr, right);
-    }
-
-    while (m_current_token.is_math_operator()) {
+    while (m_current_token.operator_precedence() > 0) {
         // Following Pratt parser's logic
         uint8_t prec = m_current_token.operator_precedence();
-        uint8_t final_prec = prec;
-
-        if (m_current_token.operator_associativity() == OperatorAssociativity::Right) {
-            final_prec -= 1;
-        }
-
         if (prec <= precedence_limit) {
-            return expr;
+            break;
         }
 
+        OperatorAssociativity assoc = m_current_token.operator_associativity();
         Token op_token = m_current_token;
-        consume_token(); // Consume the operator
 
-        auto right = parse_expression(final_prec);
+        uint8_t next_min_prec = prec;
+        if (assoc == OperatorAssociativity::Right) {
+            next_min_prec -= 1;
+        }
+
+        consume_token(); // Consume the operator
+        auto right = parse_expression(next_min_prec);
         expr = std::make_shared<ASTBinaryOp>(op_token, expr, right);
+
+        if (assoc == OperatorAssociativity::NonAssociative &&
+            m_current_token.operator_precedence() == prec) {
+            Reporter::report_error("comparison operators cannot be chained");
+            m_had_error = true;
+        }
     }
 
     return expr;

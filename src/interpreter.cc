@@ -237,10 +237,11 @@ Interpreter::evaluate_binop(const std::shared_ptr<ASTBinaryOp>& binop)
             return std::get<bool>(left) && std::get<bool>(right);
         case TokenKind::Or:
             return std::get<bool>(left) || std::get<bool>(right);
+        // == and != work for either booleans and numbers - no need to std::get
         case TokenKind::DoubleEquals:
-            return std::get<bool>(left) == std::get<bool>(right);
+            return left == right;
         case TokenKind::NotEquals:
-            return std::get<bool>(left) != std::get<bool>(right);
+            return left != right;
         default: break;
     }
 

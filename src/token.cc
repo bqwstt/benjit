@@ -55,41 +55,30 @@ Token::to_string() const
     return std::format("<{} ({})>", name, literal());
 }
 
-bool
-Token::is_math_operator() const noexcept
-{
-    return m_kind == TokenKind::Plus
-        || m_kind == TokenKind::Minus
-        || m_kind == TokenKind::Multiply
-        || m_kind == TokenKind::Divide
-        || m_kind == TokenKind::Exponent;
-}
-
-bool
-Token::is_logical_operator() const noexcept
-{
-    return m_kind == TokenKind::GreaterThan
-        || m_kind == TokenKind::GreaterEquals
-        || m_kind == TokenKind::LessThan
-        || m_kind == TokenKind::DoubleEquals
-        || m_kind == TokenKind::NotEquals
-        || m_kind == TokenKind::Or
-        || m_kind == TokenKind::And;
-}
-
 unsigned
 Token::operator_precedence() const noexcept
 {
-    // Based on Pratt's parser logic.
     switch (m_kind) {
+        case TokenKind::Or:
+            return 1;
+        case TokenKind::And:
+            return 2;
+        case TokenKind::DoubleEquals:
+        case TokenKind::NotEquals:
+            return 3;
+        case TokenKind::LessThan:
+        case TokenKind::LessEquals:
+        case TokenKind::GreaterThan:
+        case TokenKind::GreaterEquals:
+            return 4;
         case TokenKind::Minus:
         case TokenKind::Plus:
-            return 1;
+            return 5;
         case TokenKind::Multiply:
         case TokenKind::Divide:
-            return 2;
+            return 6;
         case TokenKind::Exponent:
-            return 3;
+            return 7;
         default:
             return 0;
     }
@@ -103,9 +92,18 @@ Token::operator_associativity() const noexcept
         case TokenKind::Plus:
         case TokenKind::Multiply:
         case TokenKind::Divide:
+        case TokenKind::And:
+        case TokenKind::Or:
             return OperatorAssociativity::Left;
         case TokenKind::Exponent:
             return OperatorAssociativity::Right;
+        case TokenKind::DoubleEquals:
+        case TokenKind::NotEquals:
+        case TokenKind::LessThan:
+        case TokenKind::LessEquals:
+        case TokenKind::GreaterThan:
+        case TokenKind::GreaterEquals:
+            return OperatorAssociativity::NonAssociative;
         default:
             return OperatorAssociativity::Unknown;
     }
