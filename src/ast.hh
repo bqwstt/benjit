@@ -145,14 +145,13 @@ public:
     ASTFunctionDeclaration(const ASTIdentifier& name)
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name) {}
+    ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTIdentifier> parameters)
+        : ASTNode(ASTKind::FunctionDeclaration)
+        , m_func_name(name)
+        , m_parameters(std::from_range, parameters) {}
     ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTPtr> body)
         : ASTNode(ASTKind::FunctionDeclaration)
         , m_func_name(name)
-        , m_body(std::from_range, body) {}
-    ASTFunctionDeclaration(const ASTIdentifier& name, std::span<ASTIdentifier> parameters, std::span<ASTPtr> body)
-        : ASTNode(ASTKind::FunctionDeclaration)
-        , m_func_name(name)
-        , m_parameters(std::from_range, parameters)
         , m_body(std::from_range, body) {}
     ~ASTFunctionDeclaration() = default;
 
@@ -163,6 +162,8 @@ public:
 
     void set_ret_expr(ASTExprPtr expr) { m_ret_expr = expr; }
     ASTExprPtr ret_expr() const noexcept { return m_ret_expr; }
+
+    const std::vector<ASTIdentifier>& parameters() const noexcept { return m_parameters; }
 private:
     ASTIdentifier m_func_name;
     std::vector<ASTIdentifier> m_parameters;
@@ -175,16 +176,17 @@ public:
     ASTFunctionCall(const ASTIdentifier& name)
         : ASTExpression(ASTKind::FunctionCall)
         , m_func_name(name) {}
-    ASTFunctionCall(const ASTIdentifier& name, std::span<ASTIdentifier> parameters)
+    ASTFunctionCall(const ASTIdentifier& name, std::span<ASTExprPtr> arguments)
         : ASTExpression(ASTKind::FunctionCall)
         , m_func_name(name)
-        , m_parameters(std::from_range, parameters) {}
+        , m_arguments(std::from_range, arguments) {}
     ~ASTFunctionCall() = default;
 
     const ASTIdentifier& func_name() const noexcept { return m_func_name; }
+    const std::vector<ASTExprPtr>& arguments() const noexcept { return m_arguments; }
 private:
     ASTIdentifier m_func_name;
-    std::vector<ASTIdentifier> m_parameters;
+    std::vector<ASTExprPtr> m_arguments;
 };
 
 class ASTConditional : public ASTNode {

@@ -1,5 +1,6 @@
 #include "interpreter.hh"
 #include "ast.hh"
+#include "reporter.hh"
 
 #include <cmath>
 #include <string>
@@ -170,6 +171,27 @@ Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func
     FunctionVariableScopeGuard guard(m_environment);
 
     auto& func = m_environment.get_function(func_call->func_name().name());
+    const auto& parameters = func.parameters();
+    const auto& arguments = func_call->arguments();
+
+    // Evaluate function parameters
+    if (parameters.size() != arguments.size()) {
+        Reporter::report_error(std::format("Arguments for function {} do not match expected amount of parameters: {} vs {}",
+            func.func_name(),
+            parameters.size(),
+            arguments.size()));
+        return NAN;
+    }
+
+    for (int i = 0; i < parameters.size(); i++) {
+        const auto& param = parameters[i];
+        const auto& arg = arguments[i];
+
+        auto param_name = param.name();
+        auto expr = evaluate_expression(arg);
+        m_environment.current_scope().tie_variable(param_name, expr);
+    }
+
     for (const auto& s : func.func_body()) {
         interpret_statement(s);
 

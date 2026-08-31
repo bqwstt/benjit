@@ -178,10 +178,22 @@ Parser::parse_function_declaration(ScopeContext& ctx)
     // @FIXME: Actually check for parameters and syntax errors
     consume_token(); // Consume func name
     consume_token(); // Consume open paren
+
+    // Parse parameters
+    std::vector<ASTIdentifier> parameters;
+    while (!is_at_end() && m_current_token.kind() != TokenKind::CloseParenthesis) {
+        ASTIdentifier param(m_current_token.literal());
+        parameters.push_back(param);
+        consume_token(); // Consume identifier
+
+        if (m_current_token.kind() == TokenKind::Comma)
+            consume_token(); // Consume comma
+    }
+
     consume_token(); // Consume close paren
     consume_token(); // Consume 'is' keyword
 
-    auto func_decl = std::make_shared<ASTFunctionDeclaration>(func_name);
+    auto func_decl = std::make_shared<ASTFunctionDeclaration>(func_name, parameters);
     auto old_func = ctx.current_function;
 
     // Set context's func to this new one
@@ -208,9 +220,19 @@ Parser::parse_function_call()
     ASTIdentifier func_name(m_current_token.literal());
     consume_token(); // Consume func name
     consume_token(); // Consume open paren
+
+    std::vector<ASTExprPtr> arguments;
+    while (!is_at_end() && m_current_token.kind() != TokenKind::CloseParenthesis) {
+        auto expr = parse_expression();
+        arguments.push_back(std::move(expr));
+
+        if (m_current_token.kind() == TokenKind::Comma)
+            consume_token(); // Consume comma
+    }
+
     consume_token(); // Consume close paren
 
-    return std::make_shared<ASTFunctionCall>(func_name);
+    return std::make_shared<ASTFunctionCall>(func_name, arguments);
 }
 
 std::shared_ptr<ASTLoop>
