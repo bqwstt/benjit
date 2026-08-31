@@ -51,6 +51,11 @@ void dump_node(ASTPtr node, uint8_t depth, bool has_child)
             std::print("{}", value->literal());
             break;
         }
+        case ASTKind::BooleanExpr: {
+            auto value = dynamic_pointer_cast<ASTBooleanExpr>(node);
+            std::print("{}", value->value());
+            break;
+        }
         case ASTKind::BinaryExpr: {
             auto binop = dynamic_pointer_cast<ASTBinaryOp>(node);
             dump_node(binop->left(), 0, false);
@@ -76,6 +81,13 @@ void dump_node(ASTPtr node, uint8_t depth, bool has_child)
                 dump_node(expr, depth+1, true);
             }
 
+            break;
+        }
+        case ASTKind::Return: {
+            auto ret = dynamic_pointer_cast<ASTReturn>(node);
+            auto func_name = std::make_shared<ASTIdentifier>(ret->parent().func_name());
+            dump_node(func_name, depth+1, true);
+            dump_node(ret->ret_expr(), depth+1, true);
             break;
         }
         default:
