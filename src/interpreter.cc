@@ -47,7 +47,7 @@ Interpreter::interpret_statement(const ASTPtr& stmt)
     }
 
     if (const auto& return_stmt = dynamic_pointer_cast<ASTReturn>(stmt)) {
-        m_stop_requested = true;
+        m_hit_return = true;
         return_stmt->parent().set_ret_expr(return_stmt->ret_expr());
     }
 
@@ -91,13 +91,13 @@ Interpreter::interpret_loop(const std::shared_ptr<ASTLoop>& loop)
     BlockVariableScopeGuard guard(m_environment);
 
     bool condition_holds = std::get<bool>(evaluate_expression(loop->condition()));
-    while (condition_holds && !m_stop_requested) {
+    while (condition_holds && !m_stop_requested && !m_hit_return) {
         loop->set_need_skip(false); // Reset skip flag if found a `continue` in previous iteration
 
         for (const auto& node : loop->body()) {
             interpret_statement(node);
 
-            if (m_stop_requested || loop->need_skip()) {
+            if (m_stop_requested || m_hit_return || loop->need_skip()) {
                 // Hit `break` or `continue`
                 // If `break`, then stop looping.
                 // If `continue`, break the inner loop and continue execution.
@@ -122,9 +122,8 @@ Interpreter::interpret_if(const std::shared_ptr<ASTIf>& if_stmt)
     for (const auto& node : body_to_run) {
         interpret_statement(node);
 
-        if (m_stop_requested) {
+        if (m_stop_requested || m_hit_return)
             break;
-        }
     }
 }
 
@@ -195,11 +194,17 @@ Interpreter::evaluate_function_call(const std::shared_ptr<ASTFunctionCall>& func
     for (const auto& s : func.func_body()) {
         interpret_statement(s);
 
-        if (auto expr = func.return_expr(); expr) {
-            // Restore flag set by return
-            m_stop_requested = false;
-            return evaluate_expression(expr);
-        }
+        // Hit return: break loop
+        // Otherwise we would still interpret everything else and mistakenly
+        // grab the wrong return statement, if any.
+        if (m_hit_return)
+            break;
+    }
+
+    if (auto expr = func.return_expr(); expr) {
+        // Restore flag set by return
+        m_hit_return = false;
+        return evaluate_expression(expr);
     }
 
     return NAN;

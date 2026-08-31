@@ -153,4 +153,5 @@ private:
 
     Environment m_environment;
     bool m_stop_requested = false;
+    bool m_hit_return = false;
 };
